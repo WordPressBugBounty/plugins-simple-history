@@ -15,27 +15,28 @@ export function EventInitiatorName( props ) {
 		case 'wp_user':
 			const nameToDisplay =
 				initiatorData.user_display_name || initiatorData.user_login;
-			const userDisplay = (
-				<>
-					<strong>{ nameToDisplay }</strong>&nbsp;
-					<span>({ initiatorData.user_email })</span>
-				</>
-			);
 
-			return (
-				<EventHeaderItem>
-					{ eventVariant === 'modal' ? (
-						<Text>{ userDisplay }</Text>
-					) : (
-						<Button
-							href={ initiatorData.user_profile_url }
-							variant="link"
-						>
-							{ userDisplay }
-						</Button>
-					) }
-				</EventHeaderItem>
-			);
+			let userDisplay;
+
+			if ( eventVariant === 'compact' ) {
+				userDisplay = <strong>{ nameToDisplay }</strong>;
+			} else if ( eventVariant === 'modal' ) {
+				userDisplay = <Text>{ userDisplay }</Text>;
+			} else {
+				userDisplay = (
+					<Button
+						href={ initiatorData.user_profile_url }
+						variant="link"
+					>
+						<>
+							<strong>{ nameToDisplay }</strong>&nbsp;
+							<span>({ initiatorData.user_email })</span>
+						</>
+					</Button>
+				);
+			}
+
+			return <EventHeaderItem>{ userDisplay }</EventHeaderItem>;
 
 		case 'web_user':
 			return (
