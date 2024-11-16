@@ -1517,4 +1517,33 @@ class Helpers {
 		 */
 		return (int) apply_filters( 'SimpleHistoryNewRowsNotifier/interval', 10000 );
 	}
+
+	/**
+	 * Increase the total number of logged events.
+	 * Used to keep track of how many events have been logged since the plugin was installed.
+	 */
+	public static function increase_total_logged_events_count() {
+		$logged_events_counter = self::get_total_logged_events_count();
+		$logged_events_counter++;
+		update_option( 'simple_history_total_logged_events_count', $logged_events_counter, false );
+	}
+
+	/**
+	 * Get the total number of logged events.
+	 * Used to keep track of how many events have been logged since the plugin was installed.
+	 *
+	 * @return int
+	 */
+	public static function get_total_logged_events_count() {
+		return (int) get_option( 'simple_history_total_logged_events_count', 0 );
+	}
+
+	/**
+	 * Get plugin install date as GMT.
+	 *
+	 * @return string|false Date as GMT or false if not set.
+	 */
+	public static function get_plugin_install_date() {
+		return get_option( 'simple_history_install_date_gmt' );
+	}
 }
