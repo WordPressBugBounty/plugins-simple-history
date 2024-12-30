@@ -4,7 +4,7 @@ Contributors: eskapism
 Donate link: https://www.paypal.me/eskapism
 Tags: history, audit log, event log, user tracking, activity
 Tested up to: 6.7
-Stable tag: 5.3.0
+Stable tag: 5.4.0
 
 Track changes and user activities on your WordPress site. See who created a page, uploaded an attachment, and more, for a complete audit trail.
 
@@ -142,18 +142,19 @@ that must be it."_
 
 If you are a theme or plugin developer and would like to add your own things/events to Simple History you can do that by using the function `SimpleLogger()` like this:
 
-```php
+`
 if ( function_exists("SimpleLogger") ) {
-		// Most basic example: just add some information to the log
-		SimpleLogger()->info("This is a message sent to the log");
+// Most basic example: just add some information to the log
+SimpleLogger()->info("This is a message sent to the log");
 
-		// A bit more advanced: log events with different severities
-		SimpleLogger()->info("User admin edited page 'About our company'");
-		SimpleLogger()->warning("User 'Jessie' deleted user 'Kim'");
-		SimpleLogger()->debug("Ok, cron job is running!");
+    	// A bit more advanced: log events with different severities
+    	SimpleLogger()->info("User admin edited page 'About our company'");
+    	SimpleLogger()->warning("User 'Jessie' deleted user 'Kim'");
+    	SimpleLogger()->debug("Ok, cron job is running!");
+
 }
 ?>
-```
+`
 
 See the [documentation](https://simple-history.com/docs/) for examples on how to [log your own events](https://simple-history.com/docs/logging-api/) and how to [query the log](https://simple-history.com/docs/query-api/), and more.
 
@@ -269,9 +270,42 @@ Read more at the [FAQ on the plugin website](https://simple-history.com/docs/faq
 
 ## Changelog
 
-✨ Do you use Simple History a lot?
-[Then sponsor the plugin to keep it free](https://simple-history.com/sponsor/) or
-[add a 5-star review so other users know it's good](https://wordpress.org/support/plugin/simple-history/reviews/?filter=5).
+✨ If you find Simple History useful ✨
+
+-   [Sponsor the plugin to keep it free.](https://simple-history.com/sponsor/)
+-   [Add a 5-star review so other users know it's good.](https://wordpress.org/support/plugin/simple-history/reviews/?filter=5)
+-   [Get the premium add-on for more features.](https://simple-history.com/add-ons/premium/?utm_source=wpadmin&utm_content=readme).
+
+### 5.4.0 (December 2024)
+
+⚡ This release contains new features and improvements.
+[Read the release post for more details](https://simple-history.com/2024/simple-history-5-4-0/).
+
+**Added**
+
+-   Enable [Admin Bar History Quick View](https://simple-history.com/features/admin-bar-quick-view/) by default - making it easier to check the latest events without leaving your current page.
+-   New [WP-CLI commands for interacting with the events log](https://simple-history.com/features/wp-cli-commands/):
+    -   `wp simple-history event list` to list events (alias to existing `wp simple-history list` command).
+    -   `wp simple-history event get` to get details about a single event.
+    -   `wp simple-history event search` to search events.
+    -   `wp simple-history db stats` to get stats.
+    -   `wp simple-history db clear` to clear the events database.
+-   HTML export format support - exports an unstyled HTML file viewable in web browsers.
+-   Loading skeleton for events log.
+-   Show a nicer message when no results found.
+-   Error message display when log fails to load, showing server error messages for easier troubleshooting.
+
+**Changed**
+
+-   Always show event item actions to make them more discoverable - no more need to hover to see available actions.
+-   Move Quick View reload button above event list.
+-   More accurate logging when creating users - now shows if "Send the new user an email about their account" was checked instead of assuming the email was sent [#493](https://github.com/bonny/WordPress-Simple-History/issues/493)
+-   Log when posts/pages are moved to trash using Gutenberg editor. [#491](https://github.com/bonny/WordPress-Simple-History/issues/491)
+
+**Fixed**
+
+-   Fix PHP notice when logging found plugin updates with invalid plugin slugs. [#497](https://github.com/bonny/WordPress-Simple-History/pull/497)
+-   Fix error message `widget_setting_too_many_options` when saving widgets in classic theme with Classic Widgets plugin. [#498](https://github.com/bonny/WordPress-Simple-History/issues/498)
 
 ### 5.3.0 (November 2024)
 
@@ -293,6 +327,8 @@ Some minor bugfixes but also a new feature in this update. [Read the release pos
 -   Fix notice `Function _load_textdomain_just_in_time was called incorrectly`.
 -   Fix Quick View not being activated by default after enabling experimental features.
 -   Hide WooCommerce Logger promo if [WooCommerce Logger](https://simple-history.com/add-ons/woocommerce/) is installed.
+-   Add Events Control Bar above events. This bar contains information about number of events, paginations, and actions dropdown with actions that are available for the log.
+-   Add Slot `SimpleHistorySlotEventsControlBarMenu`.
 
 ### 5.1.0 (November 2024)
 

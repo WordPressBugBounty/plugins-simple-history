@@ -7,7 +7,12 @@
 	--sh-color-gray: #c3c4c7;
 	/* For dividers and similar, like "Item 1 | Item 2". */
 	--sh-color-gray-2: #a7aaad;
+	/* For smaller meta header text */
+	--sh-color-gray-3: rgb(137, 143, 156);
+	/* For discrete elements like skeleton loading background */
+	--sh-color-gray-4: #ededed;
 	--sh-color-green: #3f9349;
+	--sh-color-green-2: darkgreen;
 }
 
 /* clearfix */
@@ -256,7 +261,7 @@ Style different log levels.
 .SimpleHistoryLogitem__header,
 /*.SimpleHistoryLogitem__header time,*/
 .SimpleHistoryLogitem__headerEmail {
-	color: rgb(137, 143, 156);
+	color: var(--sh-color-gray-3);
 }
 
 .SimpleHistoryLogitem__text,
@@ -279,7 +284,7 @@ Style different log levels.
 }
 
 .SimpleHistoryLogitem__occasions {
-	color: rgb(137, 143, 156);
+	color: var(--sh-color-gray-3);
 	margin-top: 0.4em;
 	display: flex;
 	gap: 1rem;
@@ -317,28 +322,13 @@ Style different log levels.
 /* Actions button, dropdown with three dots ⋮ */
 .SimpleHistoryLogitem__actions {
 	position: absolute;
-	opacity: 0;
-	top: 0;
+	top: 12px;
 	right: 12px;
 }
 
 .SimpleHistoryLogitem:hover {
 	background-color: #fafafa;
 }
-
-.SimpleHistoryLogitem:hover .SimpleHistoryLogitem__actions,
-.SimpleHistoryLogitem--variant-modal .SimpleHistoryLogitem__actions {
-	opacity: 1;
-}
-
-/*.SimpleHistoryLogitem__details .wp-video-shortcode {
-
-}*/
-
-/* table with keys and values */
-/*.SimpleHistoryLogitem__keyValueTable {
-
-}*/
 
 .SimpleHistoryLogitem__keyValueTable th,
 .SimpleHistoryLogitem__keyValueTable td {
@@ -381,7 +371,7 @@ Style different log levels.
 .SimpleHistoryLogitem__inlineDivided:before {
 	/* \b7 = middot, \a0 = space */
 	content: "\b7\a0";
-	color: rgb(137, 143, 156);
+	color: var(--sh-color-gray-3);
 }
 
 .SimpleHistoryLogitem__inlineDivided:first-child:before {
@@ -1053,14 +1043,80 @@ so add some extra place then to make it look a bit less ugly.
 	display: inline-block;
 	text-transform: uppercase;
 	font-size: 0.8em;
-	background: green;
-	text-decoration: underline;
-	text-decoration-color: green;
+	background: var(--sh-color-green);
+	text-decoration: none;
+	text-decoration-color: var(--sh-color-green-2);
 	padding: 3px 4px;
 	line-height: 1;
 	border-radius: 3px;
 	color: #eee;
 	margin-left: 0.1em;
+}
+
+.sh-PremiumFeatureBadge {
+	display: inline-flex;
+	align-items: center;
+	background-color: var(--sh-color-green-2);
+	color: white;
+	text-transform: uppercase;
+	font-size: 0.8em;
+	font-weight: normal;
+	font-style: normal;
+	border: 1px solid var(--sh-color-green-2);
+	border-radius: 4px;
+	padding: 0.25em 0.5em;
+	opacity: 0.75;
+	line-height: 1;
+	margin: 0;
+}
+
+.sh-PremiumFeaturesPostbox {
+	text-wrap-style: pretty;
+	padding: 1rem;
+}
+
+.sh-PremiumFeaturesPostbox-preTitleFeaturesBadge {
+	margin: 0 0 0.5rem 0;
+}
+
+.sh-PremiumFeaturesPostbox-title {
+	color: #1d2327;
+	font-size: 1.5em;
+	margin: 0 0 1em 0;
+}
+
+.sh-PremiumFeaturesPostbox-button {
+	display: inline-block;
+	background-color: var(--sh-color-green);
+	color: white;
+	text-decoration: none;
+	padding: 0.75em 1.25em;
+	border-radius: 10px;
+	display: block;
+	text-align: center;
+	transition: background-color 0.25s ease-out;
+}
+
+.sh-PremiumFeaturesPostbox-button:active,
+.sh-PremiumFeaturesPostbox-button:focus,
+.sh-PremiumFeaturesPostbox-button:hover {
+	color: white;
+	background-color: var(--sh-color-green-2);
+}
+
+.sh-PremiumFeaturesPostbox-featuresList {
+	list-style: none;
+	margin: 1.5rem 0 1.5rem 0;
+}
+.sh-PremiumFeaturesPostbox-featuresList-item {
+	font-size: 0.9rem;
+	margin-top: 0.5rem;
+	padding-left: 30px;
+	line-height: 1.2rem;
+	background-image: url(./icons/check_circle_24dp_3F9349_FILL0_wght400_GRAD0_opsz24.svg);
+	background-size: 1.1rem;
+	background-repeat: no-repeat;
+	background-position: 0px 1px;
 }
 
 .sh-Page-content {
