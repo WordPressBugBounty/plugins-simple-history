@@ -4,7 +4,7 @@ Contributors: eskapism
 Donate link: https://www.paypal.me/eskapism
 Tags: history, audit log, event log, user tracking, activity
 Tested up to: 6.7
-Stable tag: 5.5.0
+Stable tag: 5.5.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -277,6 +277,10 @@ Read more at the [FAQ on the plugin website](https://simple-history.com/docs/faq
 -   [Sponsor the plugin to keep it free.](https://simple-history.com/sponsor/)
 -   [Add a 5-star review so other users know it's good.](https://wordpress.org/support/plugin/simple-history/reviews/?filter=5)
 -   [Get the premium add-on for more features.](https://simple-history.com/add-ons/premium/?utm_source=wpadmin&utm_content=readme).
+
+### 5.5.1 (January 2025)
+
+-   Fix the redirect from old settings page to new settings page and from old event log page to new event log page now always working when there was for example a WordPress update notice.
 
 ### 5.5.0 (January 2025)
 
