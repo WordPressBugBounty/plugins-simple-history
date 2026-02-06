@@ -99,36 +99,37 @@ class Autoloader {
 	/**
 	 * Loads the class file for a given class name.
 	 *
-	 * @param string $class The fully-qualified class name.
+	 * @param string $class_name The fully-qualified class name.
 	 * @return mixed The mapped file name on success, or boolean false on
 	 * failure.
 	 */
-	public function load_class( $class ) {
-		// the current namespace prefix.
-		$prefix = $class;
+	public function load_class( $class_name ) {
+		// The current namespace prefix.
+		$prefix = $class_name;
 
-		// work backwards through the namespace names of the fully-qualified
+		// Work backwards through the namespace names of the fully-qualified
 		// class name to find a mapped file name.
-		while ( false !== $pos = strrpos( $prefix, '\\' ) ) {
+		$pos = strrpos( $prefix, '\\' );
 
-			// retain the trailing namespace separator in the prefix.
-			$prefix = substr( $class, 0, $pos + 1 );
+		while ( false !== $pos ) {
+			// Retain the trailing namespace separator in the prefix.
+			$prefix = substr( $class_name, 0, $pos + 1 );
 
-			// the rest is the relative class name.
-			$relative_class = substr( $class, $pos + 1 );
+			// The rest is the relative class name.
+			$relative_class = substr( $class_name, $pos + 1 );
 
-			// try to load a mapped file for the prefix and relative class.
+			// Try to load a mapped file for the prefix and relative class.
 			$mapped_file = $this->load_mapped_file( $prefix, $relative_class );
 			if ( $mapped_file ) {
 				return $mapped_file;
 			}
 
-			// remove the trailing namespace separator for the next iteration
-			// of strrpos().
+			// Remove the trailing namespace separator for the next iteration.
 			$prefix = rtrim( $prefix, '\\' );
+			$pos    = strrpos( $prefix, '\\' );
 		}
 
-		// never found a mapped file.
+		// Never found a mapped file.
 		return false;
 	}
 
@@ -148,7 +149,6 @@ class Autoloader {
 
 		// look through base directories for this namespace prefix.
 		foreach ( $this->prefixes[ $prefix ] as $base_dir ) {
-
 			// replace the namespace prefix with the base directory,
 			// replace namespace separators with directory separators
 			// in the relative class name, append with .php.
@@ -166,11 +166,16 @@ class Autoloader {
 				$path_and_file_lowercased_and_prefixed = "class-{$path_and_file_lowercased_and_prefixed}";
 			}
 
-			$file_with_class_prefix = $base_dir
-			. $path_and_file_lowercased_and_prefixed
-			. '.php';
+			$file_with_class_prefix = $base_dir . $path_and_file_lowercased_and_prefixed . '.php';
 
-			// Check for file with prefixed 'namespace-' and lowercase filename.
+			// if the mapped file with "class-" prefix exists, require it.
+			// <path>/WordPress-Simple-History/inc/services/class-admin-pages.php.
+			if ( $this->require_file( $file_with_class_prefix ) ) {
+				// yes, we're done.
+				return $file_with_class_prefix;
+			}
+
+			// Check for file with prefixed 'interface-' and lowercase filename.
 			$path_and_file_lowercased_and_prefixed_with_interface = strtolower( $path_and_file );
 			$path_and_file_lowercased_and_prefixed_with_interface = str_replace( '_', '-', $path_and_file_lowercased_and_prefixed_with_interface );
 			$path_and_file_lowercased_and_prefixed_with_interface = str_replace( '/', '/interface-', $path_and_file_lowercased_and_prefixed_with_interface );
@@ -178,26 +183,34 @@ class Autoloader {
 				$path_and_file_lowercased_and_prefixed_with_interface = "interface-{$path_and_file_lowercased_and_prefixed_with_interface}";
 			}
 
-			$file_with_interface_prefix = $base_dir
-			. $path_and_file_lowercased_and_prefixed_with_interface
-			. '.php';
+			$file_with_interface_prefix = $base_dir . $path_and_file_lowercased_and_prefixed_with_interface . '.php';
 
-			// if the mapped file with "class-" prefix exists, require it.
-			if ( $this->require_file( $file_with_class_prefix ) ) {
-				// yes, we're done.
-				return $file_with_class_prefix;
-			}
-
-			// if the mapped file with "class-" prefix exists, require it.
+			// if the mapped file with "interface-" prefix exists, require it.
+			// <path>/WordPress-Simple-History/inc/event-details/interface-event-details-container-interface.php.
 			if ( $this->require_file( $file_with_interface_prefix ) ) {
 				// yes, we're done.
 				return $file_with_interface_prefix;
 			}
 
-			// <path>/WordPress-Simple-History/Dropins/Debug_Dropin.php
-			$file = $base_dir
-				  . $path_and_file
-				  . '.php';
+			// Check for file with prefixed 'trait-' and lowercase filename.
+			$path_and_file_lowercased_and_prefixed_with_trait = strtolower( $path_and_file );
+			$path_and_file_lowercased_and_prefixed_with_trait = str_replace( '_', '-', $path_and_file_lowercased_and_prefixed_with_trait );
+			$path_and_file_lowercased_and_prefixed_with_trait = str_replace( '/', '/trait-', $path_and_file_lowercased_and_prefixed_with_trait );
+			if ( ! str_contains( $path_and_file_lowercased_and_prefixed_with_trait, 'trait-' ) ) {
+				$path_and_file_lowercased_and_prefixed_with_trait = "trait-{$path_and_file_lowercased_and_prefixed_with_trait}";
+			}
+
+			$file_with_trait_prefix = $base_dir . $path_and_file_lowercased_and_prefixed_with_trait . '.php';
+
+			// if the mapped file with "trait-" prefix exists, require it.
+			// <path>/WordPress-Simple-History/inc/channels/trait-channel-error-tracking.php.
+			if ( $this->require_file( $file_with_trait_prefix ) ) {
+				// yes, we're done.
+				return $file_with_trait_prefix;
+			}
+
+			// <path>/WordPress-Simple-History/Dropins/Debug_Dropin.php.
+			$file = $base_dir . $path_and_file . '.php';
 
 			// if the mapped file exists, require it.
 			if ( $this->require_file( $file ) ) {
@@ -218,6 +231,7 @@ class Autoloader {
 	 */
 	protected function require_file( $file ) {
 		if ( file_exists( $file ) ) {
+			// phpcs:ignore WordPressVIPMinimum.Files.IncludingFile.UsingVariable -- Safe: path built from registered namespaces, not user input.
 			require $file;
 			return true;
 		}

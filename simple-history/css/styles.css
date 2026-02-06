@@ -2,7 +2,7 @@
  * Use SuitCSS based classnames.
  */
 
-@import './variables.css';
+@import "./variables.css";
 
 /* clearfix */
 .SimpleHistory__cf:before,
@@ -65,6 +65,28 @@
 		align-items: flex-start;
 		justify-content: space-between;
 	}
+}
+
+/* Page sidebar styles */
+@media only screen and (min-width: 960px) {
+	.SimpleHistory__pageSidebar {
+		flex: 0 0 25%;
+		max-width: 25%;
+		width: 100%;
+		padding-left: 1rem;
+	}
+}
+
+.SimpleHistory__pageSidebar .inside {
+	margin-bottom: 0;
+}
+
+.SimpleHistory__pageSidebar .metabox-holder {
+	padding-top: 0 !important;
+}
+
+.SimpleHistory__pageSidebar .postbox .hndle {
+	cursor: auto;
 }
 
 /*
@@ -163,6 +185,9 @@
 /* Divider line, at middle of divider. */
 
 .SimpleHistoryEventSeparator__label {
+	display: flex;
+	align-items: center;
+	max-height: 1em;
 	padding: var(--sh-spacing-small) var(--sh-spacing-medium);
 	border-radius: 1rem;
 	line-height: 1;
@@ -198,7 +223,7 @@ Tag = the pill with the log level.
 	background-color: rgba(238, 238, 238, 1);
 	font-size: 10px;
 	padding: 3px 4px;
-	border-radius: 3px;
+	border-radius: var(--sh-border-radius);
 	vertical-align: 1px;
 	line-height: 1;
 }
@@ -282,6 +307,20 @@ Tag = the pill with the log level.
 /*.SimpleHistoryLogitem__header time,*/
 .SimpleHistoryLogitem__headerEmail {
 	color: var(--sh-color-gray-3);
+}
+
+/* Event ID shown in surrounding events mode */
+.SimpleHistoryLogitem__eventId {
+	font-family: monospace;
+	font-size: 12px;
+	color: var(--sh-color-gray-3);
+	margin-right: 0.5em;
+}
+
+/* Emphasize event ID on center event */
+.SimpleHistoryLogitem--is-center-event .SimpleHistoryLogitem__eventId {
+	color: var(--sh-color-blue);
+	font-weight: 600;
 }
 
 .SimpleHistoryLogitem__text,
@@ -673,7 +712,7 @@ Modal window with detailss
 
 .SimpleHistory-modal__content {
 	background: white;
-	border-radius: 4px;
+	border-radius: var(--sh-border-radius);
 	border: 1px solid rgba(0, 0, 0, 0.2);
 	bottom: 60px;
 	box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
@@ -1040,8 +1079,14 @@ so add some extra place then to make it look a bit less ugly.
 	margin-top: 25px;
 }
 
-.sh-PageHeader-title {
+.sh-PageHeader-titleGroup {
+	display: flex;
+	align-items: center;
+	gap: 10px;
 	flex: 1;
+}
+
+.sh-PageHeader-title {
 	font-size: 23px;
 	font-weight: 400;
 	margin: 0;
@@ -1070,6 +1115,54 @@ so add some extra place then to make it look a bit less ugly.
 	--sh-icon-size: 25px;
 }
 
+/* Base badge styles shared by all header badges */
+.sh-PageHeader-badge {
+	color: var(--sh-color-white);
+	font-size: 9px;
+	font-weight: 600;
+	padding: var(--sh-spacing-xsmall) var(--sh-spacing-small);
+	border-radius: var(--sh-border-radius);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	line-height: 1;
+	margin-left: var(--sh-spacing-small);
+}
+
+/* Dev badge variant */
+.sh-PageHeader-badge--dev {
+	background-color: #2271b1;
+}
+
+/* Premium toggle badge variant */
+.sh-PageHeader-badge--premiumToggle {
+	border: none;
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	gap: var(--sh-spacing-xsmall);
+	vertical-align: middle;
+}
+
+.sh-PageHeader-badge--premiumToggle .dashicons {
+	font-size: 10px;
+	width: 10px;
+	height: 10px;
+	line-height: 1;
+}
+
+.sh-PageHeader-badge--premiumToggle.is-active {
+	background-color: #00a32a;
+}
+
+.sh-PageHeader-badge--premiumToggle.is-inactive {
+	background-color: #d63638;
+}
+
+.sh-PageHeader-badge--premiumToggle:disabled {
+	opacity: 0.6;
+	cursor: wait;
+}
+
 .sh-NotificationBar {
 	position: relative;
 	text-align: center;
@@ -1087,23 +1180,58 @@ so add some extra place then to make it look a bit less ugly.
 	inset: 0;
 }
 
-.sh-PremiumFeatureBadge {
-	--sh-badge-text-color: var(--sh-color-black);
-	--sh-badge-background-color: var(--sh-color-green-mint);
-
-	color: var(--sh-badge-text-color);
-	background-color: var(--sh-badge-background-color);
+/* Base badge styles - shared by all badge types */
+.sh-Badge {
 	display: inline-flex;
 	align-items: center;
 	text-transform: uppercase;
-	font-size: 0.8em;
+	font-size: 0.7em;
 	font-weight: 600;
 	font-style: normal;
-	border-radius: 4px;
-	padding: 0.25em 0.5em;
-	opacity: 0.75;
+	border-radius: var(--sh-border-radius);
+	padding: 0.2em 0.5em;
 	line-height: 1;
 	margin: 0;
+	vertical-align: middle;
+}
+
+/* Badge variants */
+.sh-Badge--new {
+	color: var(--sh-color-white);
+	background-color: var(--sh-color-blue);
+}
+
+.sh-Badge--premium {
+	font-size: 0.8em;
+	padding: 0.25em 0.5em;
+	color: var(--sh-color-black);
+	background-color: var(--sh-color-green-mint);
+	opacity: 0.75;
+}
+
+/* New feature notice banner */
+.sh-BetaNotice {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--sh-spacing-small);
+	padding: var(--sh-spacing-medium);
+	background-color: #f0f6fc;
+	border: 1px solid var(--sh-color-blue);
+	border-left-width: 4px;
+	border-radius: var(--sh-border-radius);
+	margin-bottom: var(--sh-spacing-large);
+}
+
+.sh-BetaNotice p {
+	margin: 0;
+}
+
+.sh-BetaNotice p + p {
+	margin-top: var(--sh-spacing-small);
+}
+
+.sh-BetaNotice a {
+	color: var(--sh-color-blue);
 }
 
 .sh-PremiumFeaturesPostbox {
@@ -1130,7 +1258,7 @@ so add some extra place then to make it look a bit less ugly.
 	color: white;
 	text-decoration: none;
 	padding: 0.75em 1.25em;
-	border-radius: 5px;
+	border-radius: var(--sh-border-radius);
 	display: block;
 	text-align: center;
 	transition: background-color 0.25s ease-out;
@@ -1164,6 +1292,534 @@ so add some extra place then to make it look a bit less ugly.
 	font-size: var(--sh-font-size-small);
 	line-height: 1.4;
 	font-style: normal;
+}
+
+.sh-PremiumFeatureTeaser {
+	background: var(--sh-color-cream);
+	padding: var(--sh-spacing-medium);
+	border-radius: var(--sh-border-radius);
+	margin-top: var(--sh-spacing-medium);
+	font-size: var(--sh-font-size-medium);
+}
+
+/*
+Can be overruled by .form-table td p
+*/
+.sh-PremiumFeatureTeaser-title,
+.form-table td .sh-PremiumFeatureTeaser-title {
+	display: flex;
+	gap: var(--sh-spacing-small);
+	font-size: var(--sh-font-size-medium);
+	margin-block-start: 0;
+	margin-block-end: var(--sh-spacing-medium);
+}
+
+.sh-PremiumFeatureTeaser
+	p:not(
+		.sh-PremiumFeatureTeaser-title,
+		.sh-PremiumFeatureTeaser-ctaLinkContainer
+	) {
+	margin: 0 0 var(--sh-spacing-small);
+}
+
+.sh-PremiumFeatureTeaser .sh-Badge--premium {
+	font-size: var(--sh-font-size-small);
+	vertical-align: middle;
+	order: 1;
+}
+
+.sh-PremiumFeatureTeaser .button {
+	font-size: 0.85em;
+}
+
+.sh-PremiumFeatureTeaser-features {
+	list-style: none;
+	padding: 0;
+	margin: 0 0 var(--sh-spacing-small) 0;
+}
+
+.sh-PremiumFeatureTeaser-features li {
+	display: flex;
+	align-items: center;
+	margin-bottom: 0.25em;
+}
+
+.sh-PremiumFeatureTeaser-features .dashicons {
+	color: #00a32a;
+	margin-inline-end: 0.25em;
+}
+
+.sh-PremiumFeatureTeaser-ctaLinkContainer,
+.form-table td .sh-PremiumFeatureTeaser-ctaLinkContainer {
+	font-size: var(--sh-font-size-medium);
+	margin-block-start: var(--sh-spacing-medium);
+	margin-block-end: 0;
+}
+
+/**
+ * Premium Teaser - Disabled Form Pattern
+ * Used to show a disabled/grayed out form that teases premium features.
+ * Users can see the form fields but cannot interact with them.
+ * The `inert` HTML attribute handles non-interactivity and accessibility.
+ * pointer-events: none is a fallback for older browsers.
+ */
+.sh-PremiumTeaser-disabledForm {
+	pointer-events: none;
+	opacity: 0.75;
+}
+
+.sh-PremiumTeaser-disabledForm input,
+.sh-PremiumTeaser-disabledForm select {
+	background-color: #f0f0f1 !important;
+	cursor: not-allowed;
+}
+
+/**
+ * Radio Options - Generic reusable styles
+ * Used by File Channel formatters, Syslog Channel mode, etc.
+ */
+.sh-RadioOptions {
+	display: flex;
+	flex-direction: column;
+}
+
+.sh-RadioOption {
+	display: block;
+	margin-bottom: 0.75em;
+}
+
+.sh-RadioOption--disabled {
+	opacity: 0.75;
+	cursor: not-allowed;
+}
+
+.sh-RadioOption--disabled input {
+	cursor: not-allowed;
+}
+
+.sh-RadioOptionDescription {
+	display: block;
+	margin-left: 24px;
+}
+
+.sh-RadioOptions--disabled {
+	opacity: 0.6;
+}
+
+/**
+ * Inline Fields - Generic reusable pattern
+ *
+ * Use for settings rows with multiple labeled fields side-by-side.
+ * Examples: Server (Address/Port/Timeout), Auth (Username/Password),
+ * Database (Name/Table), Advanced (Facility/Identity).
+ *
+ * Structure:
+ *   <div class="sh-InlineFields">
+ *     <label class="sh-InlineField">
+ *       <span class="sh-InlineFieldLabel">Address</span>
+ *       <input type="text" />
+ *     </label>
+ *     <label class="sh-InlineField">
+ *       <span class="sh-InlineFieldLabel">Timeout</span>
+ *       <span class="sh-InlineFieldInputWithSuffix">
+ *         <input type="number" />
+ *         <span class="sh-InlineFieldSuffix">sec</span>
+ *       </span>
+ *     </label>
+ *   </div>
+ *
+ * @since 5.x.0
+ */
+.sh-InlineFields {
+	display: flex;
+	align-items: flex-start;
+	flex-wrap: wrap;
+	gap: 1.5em;
+}
+
+.sh-InlineField {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25em;
+}
+
+.sh-InlineFieldLabel {
+	font-weight: 400;
+}
+
+.sh-InlineFieldInputWithSuffix {
+	display: flex;
+	align-items: center;
+	gap: 0.25em;
+}
+
+.sh-InlineFieldSuffix {
+	color: #666;
+}
+
+.sh-FileChannel-fileManagement {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.sh-FileChannel-fileManagement select {
+	margin: 0;
+}
+
+.sh-FileChannel-fileManagement input[type="number"] {
+	width: 70px;
+	margin: 0;
+}
+
+.sh-FileChannel-folderInfo {
+	max-width: 600px;
+}
+
+.sh-FileChannel-folderPath {
+	display: block;
+	padding: 8px 12px;
+	background: #f6f7f7;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	word-break: break-all;
+}
+
+.sh-FileChannel-folderStatus {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 4px;
+	margin: 8px 0;
+}
+
+.sh-FileChannel-folderStatus--error,
+.sh-FileChannel-folderStatus--success {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.sh-FileChannel-folderStatus--error {
+	color: #b32d2e;
+}
+
+.sh-FileChannel-folderStatus--success {
+	color: #2e7d32;
+}
+
+.sh-FileChannel-folderStatus--error .dashicons,
+.sh-FileChannel-folderStatus--success .dashicons {
+	font-size: 18px;
+	width: 18px;
+	height: 18px;
+}
+
+.sh-FileChannel-folderStats {
+	color: #50575e;
+}
+
+.sh-FileChannel-securityNote {
+	margin: 4px 0 0 0;
+	color: #646970;
+	font-size: 13px;
+}
+
+/* Status Box - info/stats cards (distinct from WP admin notices) */
+.sh-StatusBox {
+	background: #fff;
+	padding: 1rem;
+	margin: 1rem 0;
+	border: 1px solid #c3c4c7;
+	border-radius: var(--sh-border-radius);
+}
+
+.sh-StatusBox--success {
+	background: #f0fdf4;
+	border-color: #86efac;
+}
+
+.sh-StatusBox--warning {
+	background: #fffbeb;
+	border-color: #fcd34d;
+}
+
+.sh-StatusBox--error {
+	background: #fef2f2;
+	border-color: #fca5a5;
+}
+
+.sh-StatusBox--info {
+	background: #eff6ff;
+	border-color: #93c5fd;
+}
+
+.sh-StatusBox p:first-child {
+	margin-top: 0;
+}
+
+.sh-StatusBox p:last-child {
+	margin-bottom: 0;
+}
+
+.sh-StatusBox ul {
+	margin: 0;
+}
+
+.sh-StatusBox-deletedInfo {
+	margin: 10px 0 0 0;
+	color: #b32d2e;
+}
+
+/* Developer Tools Box */
+.sh-DevToolsBox {
+	margin-top: 30px;
+	padding: 20px;
+	border: 1px solid #c3c4c7;
+	border-left: 4px solid #d63638;
+	background: #fff;
+}
+
+.sh-DevToolsBox-heading {
+	margin-top: 0;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.sh-DevToolsBox-heading .dashicons {
+	color: #d63638;
+}
+
+.sh-DevToolsBox-description {
+	margin-bottom: 20px;
+}
+
+.sh-DevToolsBox-section {
+	margin-top: 20px;
+	margin-bottom: 10px;
+}
+
+.sh-DevToolsBox-section--bordered {
+	margin-top: 25px;
+	padding-top: 15px;
+	border-top: 1px solid #dcdcde;
+}
+
+.sh-DevToolsBox-warning {
+	color: #d63638;
+}
+
+/* Preview Details Box */
+.sh-PreviewDetails {
+	background: #f0f0f1;
+	padding: 15px;
+	margin: 15px 0;
+}
+
+.sh-PreviewDetails summary {
+	cursor: pointer;
+	font-weight: 600;
+}
+
+.sh-PreviewDetails-description {
+	margin: 10px 0;
+}
+
+.sh-PreviewDetails table {
+	margin-top: 10px;
+}
+
+/* Utility class for right-aligned table cells */
+.sh-textRight {
+	text-align: right;
+}
+
+/* Utility class for auto-width tables */
+.sh-tableAuto {
+	width: auto;
+}
+
+/* Checkbox label utilities */
+.sh-CheckboxLabel {
+	display: block;
+	margin-bottom: 5px;
+}
+
+.sh-CheckboxLabel--spaced {
+	display: block;
+	margin-bottom: 10px;
+}
+
+/* Inline checkbox with input field */
+.sh-CheckboxLabel--inline,
+.sh-DateRangeInput {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5em;
+}
+
+/* Grid layout for checkboxes - 2 columns sized to content */
+.sh-CheckboxGrid {
+	display: grid;
+	grid-template-columns: max-content max-content;
+	gap: 0.5rem 3rem;
+	margin-bottom: 0.5em;
+}
+
+.sh-CheckboxGrid .sh-CheckboxLabel {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	gap: 0.4em;
+	margin-bottom: 0;
+	line-height: 1.4;
+	justify-self: start;
+}
+
+.sh-CheckboxGrid .sh-CheckboxLabel input[type="checkbox"] {
+	margin: 0.2em 0 0 0;
+	flex-shrink: 0;
+}
+
+.sh-CheckboxLabel-count {
+	font-size: 0.9em;
+	color: var(--sh-color-gray-3);
+}
+
+/* Select all/none toggle links */
+.sh-SelectToggle {
+	margin-bottom: 0.5em;
+	font-size: 13px;
+}
+
+.sh-SelectToggle a {
+	cursor: pointer;
+	text-decoration: underline;
+}
+
+.sh-SelectToggle-separator {
+	margin: 0 0.25em;
+	color: #999;
+}
+
+/* Backfill Form */
+.sh-BackfillForm {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: var(--sh-border-radius);
+	padding: 1rem 1.5rem;
+}
+
+.sh-BackfillForm-title {
+	margin: 0 0 0.5rem 0;
+	padding: 0;
+	font-size: 14px;
+	font-weight: 400;
+}
+
+.sh-BackfillForm-table {
+	margin: 0;
+}
+
+.sh-BackfillForm-table th {
+	padding: 0.75rem 0.75rem 0.75rem 0;
+	width: 100px;
+}
+
+.sh-BackfillForm-table td {
+	padding: 0.75rem 0;
+}
+
+/* Premium Feature Modal */
+.sh-PremiumFeatureModal.components-modal__frame,
+.components-modal__frame.sh-PremiumFeatureModal {
+	background-color: var(--sh-color-cream);
+	max-width: 500px;
+}
+
+.sh-PremiumFeatureModal .components-modal__content,
+.components-modal__frame.sh-PremiumFeatureModal .components-modal__content {
+	padding: 2rem;
+	background-color: var(--sh-color-cream);
+}
+
+.sh-PremiumFeatureModal-icon {
+	display: flex;
+	justify-content: center;
+	margin-bottom: 1rem;
+}
+
+.sh-PremiumFeatureModal-icon svg {
+	width: 48px;
+	height: 48px;
+	fill: var(--sh-color-black);
+}
+
+.sh-PremiumFeatureModal-title {
+	text-align: center;
+	font-size: 1.5rem;
+	font-weight: 600;
+	margin: 0 0 0.75rem 0;
+	line-height: 1.3;
+}
+
+.sh-PremiumFeatureModal-description {
+	text-align: center;
+	color: var(--sh-color-black-2);
+	margin: 0 0 1.5rem 0;
+	font-size: 1rem;
+	line-height: 1.5;
+}
+
+.sh-PremiumFeatureModal-imageContainer {
+	background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+	border-radius: 8px;
+	padding: 1rem;
+	margin-bottom: 1.5rem;
+}
+
+.sh-PremiumFeatureModal-image {
+	width: 100%;
+	height: auto;
+	border-radius: var(--sh-border-radius);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	display: block;
+}
+
+.sh-PremiumFeatureModal-actions {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.75rem;
+}
+
+.sh-PremiumFeatureModal-upgradeButton.components-button.is-primary {
+	background-color: var(--sh-color-blue);
+	color: var(--sh-color-white);
+	padding: 0.75rem 2rem;
+	border-radius: var(--sh-border-radius);
+	font-size: 1rem;
+	font-weight: 500;
+	border: none;
+}
+
+.sh-PremiumFeatureModal-upgradeButton.components-button.is-primary:hover {
+	background-color: #0039cc;
+}
+
+.sh-PremiumFeatureModal-later {
+	background: none;
+	border: none;
+	color: var(--sh-color-blue);
+	cursor: pointer;
+	font-size: 0.875rem;
+	padding: 0.5rem;
+}
+
+.sh-PremiumFeatureModal-later:hover {
+	text-decoration: underline;
 }
 
 .sh-PageNav {
@@ -1215,15 +1871,16 @@ so add some extra place then to make it look a bit less ugly.
 }
 
 .sh-SettingsPage-settingsSection-wrap {
-	padding: 1rem 0;
-	margin: 1rem 0;
+	padding: var(--sh-spacing-medium) 0;
+	margin: var(--sh-spacing-medium) 0;
 }
 
 .sh-SettingsPage-settingsSection-wrap h2 {
 	margin: 0;
 }
 
-.sh-SettingsPage-settingsSection-title {
+.sh-SettingsPage-settingsSection-title,
+.sh-SettingsCard-title {
 	display: block;
 	font-size: 23px;
 	font-weight: 400;
@@ -1236,7 +1893,6 @@ so add some extra place then to make it look a bit less ugly.
 	--sh-icon-size: 24px;
 	width: var(--sh-icon-size);
 	height: var(--sh-icon-size);
-	/* background-image: url(./icons/info_FILL0_wght400_GRAD0_opsz48.svg); */
 	display: inline-block;
 	background-size: 100%;
 	vertical-align: middle;
@@ -1249,7 +1905,6 @@ so add some extra place then to make it look a bit less ugly.
 	--sh-icon-size: 20px;
 	width: var(--sh-icon-size);
 	height: var(--sh-icon-size);
-	/* background-image: url(./icons/info_FILL0_wght400_GRAD0_opsz48.svg); */
 	display: inline-block;
 	background-size: 100%;
 	vertical-align: middle;
@@ -1257,6 +1912,23 @@ so add some extra place then to make it look a bit less ugly.
 	position: relative;
 	top: -1px;
 	left: 2px;
+}
+
+/* Highlight settings sections when navigated to via #hash. */
+.sh-SettingsPage-settingsSection-wrap td > div:target,
+.sh-SettingsPage-settingsSection-wrap:target {
+	background-color: lightyellow;
+	/* Push target down when navigated to via #hash. */
+	scroll-margin-top: 2rem;
+}
+
+.sh-SettingsPage-settingsSection-wrap td > div:target {
+	padding: 1rem;
+}
+
+.sh-SettingsPage-settingsSection-wrap:target {
+	padding: 0.5rem 1rem;
+	border-radius: var(--sh-border-radius);
 }
 
 .sh-PageNav-icon {
@@ -1333,10 +2005,11 @@ a.sh-SettingsTabs-link:hover {
 }
 
 .sh-LicencesPage-plugin {
-	background: #fff;
-	border-radius: 0.5rem;
-	margin-bottom: 2rem;
+	background: var(--sh-color-white);
+	border-radius: 8px;
+	margin-bottom: 1.5rem;
 	padding: 1.5rem;
+	border: 1px solid var(--sh-color-gray);
 }
 
 .form-table .sh-LicencesPage-plugin-name {
@@ -1357,7 +2030,7 @@ a.sh-SettingsTabs-link:hover {
 
 .sh-FeedIntroduction {
 	background: #f6f7f7;
-	border-radius: 5px;
+	border-radius: var(--sh-border-radius);
 	padding: 1em;
 	display: flex;
 	flex-direction: column;
@@ -1589,6 +2262,16 @@ a.sh-SettingsTabs-link:hover {
 	background: rgba(254, 255, 0, 0.1);
 }
 
+/* Center event highlight for surrounding events view */
+.SimpleHistoryLogitem--is-center-event {
+	background: var(--sh-color-blue-light);
+	box-shadow: inset 4px 0 0 0 var(--sh-color-blue);
+}
+
+.SimpleHistoryLogitem--is-center-event:hover {
+	background: color-mix(in srgb, var(--sh-color-blue-light), var(--sh-color-blue) 10%);
+}
+
 /* Old styles moved from ip-info-dropin.css */
 
 .SimpleHistoryIpInfoDropin__ipInfoTable {
@@ -1624,6 +2307,13 @@ a.sh-SettingsTabs-link:hover {
 /* New styles for React */
 .SimpleHistoryReactRoot {
 	flex: 1;
+}
+
+.SimpleHistoryReactRoot-loading {
+	display: block;
+	min-height: 400px;
+	padding: var(--sh-spacing-medium);
+	color: var(--sh-color-black-2);
 }
 
 .SimpleHistoryReactRoot.is-dashboard .SimpleHistory-filters {
@@ -1676,4 +2366,239 @@ Styles for plugin update details. Markup looks like this:
 .SimpleHistoryLogitem__details .sh-PluginUpdateDetails-releaseLink {
 	margin-top: var(--sh-spacing-small);
 	margin-bottom: var(--sh-spacing-small);
+}
+
+/* Make chart canvas show pointer cursor to indicate it's clickable */
+.SimpleHistory_SidebarChart_ChartCanvas {
+	cursor: pointer;
+}
+
+/**
+ * Settings Page Cards
+ * Modern card-based layout for settings sections.
+ */
+.sh-SettingsCard {
+	background: var(--sh-color-white);
+	border-radius: 8px;
+	padding: var(--sh-spacing-large);
+	margin: var(--sh-spacing-medium) 0;
+	border: 1px solid var(--sh-color-separator);
+}
+
+.sh-SettingsCard .form-table {
+	margin-top: 0;
+}
+
+.sh-SettingsCard .form-table th {
+	padding-top: var(--sh-spacing-medium);
+	padding-bottom: var(--sh-spacing-medium);
+}
+
+.sh-SettingsCard .form-table td {
+	padding-top: var(--sh-spacing-medium);
+	padding-bottom: var(--sh-spacing-medium);
+}
+
+/* Remove default border from form-table rows inside cards */
+/* .sh-SettingsCard .form-table tr {
+	border-bottom: 1px solid var(--sh-color-separator);
+} */
+
+/* .sh-SettingsCard .form-table tr:last-child {
+	border-bottom: none;
+} */
+
+/* Make section title inside card more prominent */
+.sh-SettingsCard h2 {
+	margin-top: 0;
+	margin-bottom: var(--sh-spacing-small);
+}
+
+/* Override default WordPress form-table width in cards */
+.sh-SettingsCard .form-table th {
+	width: 220px;
+}
+
+@media (max-width: 782px) {
+	.sh-SettingsCard .form-table th {
+		width: auto;
+	}
+}
+
+/* Email Promo Card - Promotional card in sidebar for weekly email summary feature */
+.sh-EmailPromoCard {
+	border: none;
+}
+
+.sh-EmailPromoCard-badge {
+	padding: 0;
+}
+
+.sh-EmailPromoCard-badgeImageLink {
+	display: block;
+	width: 100px;
+	float: right;
+	margin-block: var(--sh-spacing-medium);
+	margin-inline-start: var(--sh-spacing-medium);
+	transform: scale(1) rotate(5deg);
+	transition: transform 0.2s ease-in-out;
+
+	&:hover {
+		transform: scale(1.05) rotate(10deg);
+	}
+}
+
+.sh-EmailPromoCard-badgeImage {
+	width: 100%;
+}
+
+.sh-EmailPromoCard-text {
+	line-height: 1.3;
+}
+
+.sh-EmailPromoCard-text--intro {
+	font-size: var(--sh-font-size-medium);
+	font-weight: 600;
+}
+
+.sh-EmailPromoCard-cta {
+	margin-block-start: var(--sh-spacing-large);
+	margin-block-end: var(--sh-spacing-medium);
+}
+
+/* Increase specificity to override .button-link styles */
+.sh-EmailPromoCard .sh-EmailPromoCard-dismiss {
+	display: block;
+	width: 100%;
+	text-align: center;
+}
+
+/**
+ * Channel Status - Generic status display for channel settings.
+ *
+ * Displays connection events as a chronological mini-log:
+ *   <div class="sh-ChannelStatus">
+ *     <h4>Connection Status</h4>
+ *     <ul class="sh-ChannelStatus-log">
+ *       <li class="sh-ChannelStatus-log-item sh-ChannelStatus-log-item--success">...</li>
+ *       <li class="sh-ChannelStatus-log-item sh-ChannelStatus-log-item--error">...</li>
+ *     </ul>
+ *   </div>
+ */
+.sh-ChannelStatus {
+	padding: 1em;
+	background: #f6f7f7;
+	border-left: 4px solid #c3c4c7;
+}
+
+/* Legacy styles - kept for backward compatibility */
+.sh-ChannelStatus--success {
+	color: #2e7d32;
+}
+
+.sh-ChannelStatus--error {
+	color: #b32d2e;
+}
+
+.sh-ChannelStatus--errorMessage {
+	margin: 0.5em 0 0 0;
+	padding: 0.75em;
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	font-family: Menlo, Consolas, Monaco, Liberation Mono, Lucida Console, monospace;
+	font-size: 12px;
+	line-height: 1.5;
+	color: #50575e;
+	word-break: break-word;
+}
+
+/* Mini-log styles */
+.sh-ChannelStatus-log {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.sh-ChannelStatus-log-item {
+	display: flex;
+	gap: 1em;
+	padding: 0.5em 0;
+	border-bottom: 1px solid #dcdcde;
+	line-height: 1.4;
+}
+
+.sh-ChannelStatus-log-item:last-child {
+	border-bottom: none;
+}
+
+.sh-ChannelStatus-log-time {
+	flex-shrink: 0;
+	color: #50575e;
+}
+
+.sh-ChannelStatus-log-message {
+	word-break: break-word;
+}
+
+.sh-ChannelStatus-log-item--success .sh-ChannelStatus-log-message {
+	color: #2e7d32;
+}
+
+.sh-ChannelStatus-log-item--error .sh-ChannelStatus-log-message {
+	color: #b32d2e;
+}
+
+.sh-ChannelStatus-log-item--disabled .sh-ChannelStatus-log-message {
+	color: #b32d2e;
+	font-weight: 600;
+}
+
+.sh-ChannelStatus-hint {
+	margin: 1em 0 0 0;
+	padding: 0.5em 0.75em;
+	background: #fff8e5;
+	border-left: 3px solid #dba617;
+	font-size: 13px;
+}
+
+.sh-ChannelStatus--empty {
+	color: #50575e;
+	font-style: italic;
+}
+
+/**
+ * Channel Test Connection - Generic test button for channel settings.
+ */
+.sh-ChannelTestConnection {
+	margin-top: 0;
+}
+
+.sh-ChannelTestConnection-hint {
+	margin-top: 0.5em;
+}
+
+.sh-ChannelTestConnection .spinner {
+	float: none;
+	margin-top: 0;
+}
+
+.sh-ChannelTestResult {
+	margin-top: 0.75em;
+	padding: 0.75em 1em;
+	border-radius: 4px;
+	line-height: 1.5;
+	word-break: break-word;
+}
+
+.sh-ChannelTestResult.sh-ChannelTestResult--success {
+	background: #edfaef;
+	border-left: 4px solid #00a32a;
+	color: #1e4620;
+}
+
+.sh-ChannelTestResult.sh-ChannelTestResult--error {
+	background: #fcf0f1;
+	border-left: 4px solid #d63638;
+	color: #8a2424;
 }

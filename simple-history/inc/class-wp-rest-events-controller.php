@@ -6,7 +6,6 @@ use stdClass;
 use WP_Error;
 use WP_REST_Controller;
 use WP_REST_Server;
-use Simple_History\Compat;
 use Simple_History\Event;
 use Simple_History\Helpers;
 use Simple_History\Log_Initiators;
@@ -26,8 +25,8 @@ class WP_REST_Events_Controller extends WP_REST_Controller {
 	 * Constructor.
 	 */
 	public function __construct() {
-		$this->namespace = 'simple-history/v1';
-		$this->rest_base = 'events';
+		$this->namespace      = 'simple-history/v1';
+		$this->rest_base      = 'events';
 		$this->simple_history = Simple_History::get_instance();
 	}
 
@@ -47,7 +46,7 @@ class WP_REST_Events_Controller extends WP_REST_Controller {
 					'permission_callback' => [ $this, 'get_items_permissions_check' ],
 					'args'                => $this->get_collection_params(),
 				],
-				'schema'      => [ $this, 'get_public_item_schema' ],
+				'schema' => [ $this, 'get_public_item_schema' ],
 			],
 		);
 
@@ -63,23 +62,28 @@ class WP_REST_Events_Controller extends WP_REST_Controller {
 					'permission_callback' => [ $this, 'create_item_permissions_check' ],
 					'args'                => array(
 						'message' => array(
-							'required' => true,
-							'type' => 'string',
+							'required'    => true,
+							'type'        => 'string',
 							'description' => 'Short message to log',
 						),
-						'note' => array(
-							'type' => 'string',
+						'note'    => array(
+							'type'        => 'string',
 							'description' => 'Additional note or details about the event',
 						),
-						'level' => array(
-							'type' => 'string',
-							'enum' => array( 'emergency', 'alert', 'critical', 'error', 'warning', 'notice', 'info', 'debug' ),
-							'default' => 'info',
+						'level'   => array(
+							'type'        => 'string',
+							'enum'        => array( 'emergency', 'alert', 'critical', 'error', 'warning', 'notice', 'info', 'debug' ),
+							'default'     => 'info',
 							'description' => 'Log level',
+						),
+						'date'    => array(
+							'type'        => 'string',
+							'format'      => 'date-time',
+							'description' => 'Date and time for the event in MySQL datetime format (Y-m-d H:i:s). If not provided, current time will be used.',
 						),
 					),
 				],
-				'schema'      => [ $this, 'get_public_item_schema' ],
+				'schema' => [ $this, 'get_public_item_schema' ],
 			],
 		);
 
@@ -96,7 +100,6 @@ class WP_REST_Events_Controller extends WP_REST_Controller {
 					'permission_callback' => [ $this, 'get_items_permissions_check' ],
 					'args'                => $this->get_collection_params_for_has_updates(),
 				],
-				// 'schema'      => [ $this, 'get_public_item_schema' ],
 			],
 		);
 
@@ -115,7 +118,6 @@ class WP_REST_Events_Controller extends WP_REST_Controller {
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_item' ),
 					'permission_callback' => array( $this, 'get_item_permissions_check' ),
-					// 'args'                => $get_item_args,
 				),
 			],
 		);
@@ -322,6 +324,13 @@ class WP_REST_Events_Controller extends WP_REST_Controller {
 			'type'        => 'integer',
 		);
 
+		// Date + ID for accurate new event detection with date ordering.
+		$query_params['since_date'] = array(
+			'description' => __( 'Limit result set to events with date > since_date OR (date = since_date AND id > since_id). Use together with since_id for accurate new event detection.', 'simple-history' ),
+			'type'        => 'string',
+			'format'      => 'date-time',
+		);
+
 		// Date to in unix timestamp format.
 		$query_params['date_from'] = array(
 			'description' => __( 'Limit result set to rows with date greater than or equal to this unix timestamp.', 'simple-history' ),
@@ -449,8 +458,8 @@ class WP_REST_Events_Controller extends WP_REST_Controller {
 		);
 
 		$query_params['context_filters'] = array(
-			'description' => __( 'Context filters as key-value pairs to filter events by context data.', 'simple-history' ),
-			'type'        => 'object',
+			'description'          => __( 'Context filters as key-value pairs to filter events by context data.', 'simple-history' ),
+			'type'                 => 'object',
 			'additionalProperties' => array(
 				'type' => 'string',
 			),
@@ -460,6 +469,74 @@ class WP_REST_Events_Controller extends WP_REST_Controller {
 			'description' => __( 'Return ungrouped events without occasions grouping.', 'simple-history' ),
 			'type'        => 'boolean',
 			'default'     => false,
+		);
+
+		// Surrounding events parameters (admin only).
+		$query_params['surrounding_event_id'] = array(
+			'description' => __( 'Show events surrounding this event ID. Returns events chronologically before and after the specified event, regardless of other filters. Requires administrator privileges.', 'simple-history' ),
+			'type'        => 'integer',
+		);
+
+		$query_params['surrounding_count'] = array(
+			'description' => __( 'Number of events to show before AND after the surrounding_event_id. Default 5, max 50.', 'simple-history' ),
+			'type'        => 'integer',
+			'default'     => 5,
+			'minimum'     => 1,
+			'maximum'     => 50,
+		);
+
+		// Exclusion filters - hide events matching these criteria.
+		// Note: When both inclusion and exclusion filters are specified for the same field, exclusion takes precedence.
+		$query_params['exclude_search'] = array(
+			'description' => __( 'Exclude events containing these words. Events matching this search will be hidden.', 'simple-history' ),
+			'type'        => 'string',
+		);
+
+		$query_params['exclude_loglevels'] = array(
+			'description' => __( 'Exclude events with these log levels.', 'simple-history' ),
+			'type'        => 'array',
+			'items'       => array(
+				'type' => 'string',
+			),
+		);
+
+		$query_params['exclude_loggers'] = array(
+			'description' => __( 'Exclude events from these loggers.', 'simple-history' ),
+			'type'        => 'array',
+			'items'       => array(
+				'type' => 'string',
+			),
+		);
+
+		$query_params['exclude_messages'] = array(
+			'description' => __( 'Exclude events with these messages. Format: LoggerSlug:message.', 'simple-history' ),
+			'type'        => 'array',
+			'items'       => array(
+				'type' => 'string',
+			),
+		);
+
+		$query_params['exclude_users'] = array(
+			'description' => __( 'Exclude events from these user IDs.', 'simple-history' ),
+			'type'        => 'array',
+			'items'       => array(
+				'type' => 'integer',
+			),
+		);
+
+		$query_params['exclude_user'] = array(
+			'description' => __( 'Exclude events from this user ID.', 'simple-history' ),
+			'type'        => 'integer',
+		);
+
+		$query_params['exclude_initiator'] = array(
+			'description'       => __( 'Exclude events from specific initiator(s).', 'simple-history' ),
+			'type'              => array( 'string', 'array' ),
+			'items'             => array(
+				'type' => 'string',
+			),
+			'validate_callback' => array( $this, 'validate_initiator_param' ),
+			'sanitize_callback' => array( $this, 'sanitize_initiator_param' ),
 		);
 
 		return $query_params;
@@ -480,79 +557,79 @@ class WP_REST_Events_Controller extends WP_REST_Controller {
 			'title'      => 'simple-history-event',
 			'type'       => 'object',
 			'properties' => array(
-				'id'           => array(
+				'id'                         => array(
 					'description' => __( 'Unique identifier for the event.', 'simple-history' ),
 					'type'        => 'integer',
 				),
-				'type'    => array(
+				'type'                       => array(
 					'description' => __( 'Type of result to return.', 'simple-history' ),
 					'type'        => 'string',
 					'enum'        => array( 'overview', 'occasions' ),
 				),
-				'date_local'         => array(
+				'date_local'                 => array(
 					'description' => __( "The date the event was added, in the site's timezone.", 'simple-history' ),
 					'type'        => array( 'string', 'null' ),
 					'format'      => 'date-time',
 				),
-				'date_gmt'     => array(
+				'date_gmt'                   => array(
 					'description' => __( 'The date the event was added, as GMT.', 'simple-history' ),
 					'type'        => array( 'string', 'null' ),
 					'format'      => 'date-time',
 				),
-				'link'         => array(
+				'link'                       => array(
 					'description' => __( 'URL to the event.', 'simple-history' ),
 					'type'        => 'string',
 					'format'      => 'uri',
 				),
-				'message'   => array(
+				'message'                    => array(
 					'description' => __( 'The interpolated message of the event.', 'simple-history' ),
 					'type'        => 'string',
 				),
-				'message_html'   => array(
+				'message_html'               => array(
 					'description' => __( 'The interpolated message of the event, with possible markup applied.', 'simple-history' ),
 					'type'        => 'string',
 				),
-				'details_html'   => array(
+				'details_html'               => array(
 					'description' => __( 'The details of the event, with possible markup applied.', 'simple-history' ),
 					'type'        => 'string',
 				),
-				'details_data'   => array(
+				'details_data'               => array(
 					'description' => __( 'The details of the event.', 'simple-history' ),
 					'type'        => 'object',
 				),
-				'message_uninterpolated'    => array(
+				'message_uninterpolated'     => array(
 					'description' => __( 'The uninterpolated message of the event.', 'simple-history' ),
 					'type'        => 'string',
 				),
-				'logger'       => array(
+				'logger'                     => array(
 					'description' => __( 'The logger of the event.', 'simple-history' ),
 					'type'        => 'string',
 				),
-				'via'          => array(
+				'via'                        => array(
 					'description' => __( 'The via of the event.', 'simple-history' ),
 					'type'        => 'string',
 				),
-				'message_key'   => array(
+				'message_key'                => array(
 					'description' => __( 'The message key of the event.', 'simple-history' ),
 					'type'        => 'string',
 				),
-				'loglevel'     => array(
+				'loglevel'                   => array(
 					'description' => __( 'The log level of the event.', 'simple-history' ),
 					'type'        => 'string',
 				),
-				'initiator' => array(
+				'initiator'                  => array(
 					'description' => __( 'The initiator of the event.', 'simple-history' ),
 					'type'        => 'string',
 				),
-				'initiator_data' => array(
+				'initiator_data'             => array(
 					'description' => __( 'Details of the initiator.', 'simple-history' ),
 					'type'        => 'object',
 				),
-				'ip_addresses' => array(
+				'ip_addresses'               => array(
 					'description' => __( 'The IP addresses of the event.', 'simple-history' ),
 					'type'        => 'array',
 				),
-				'occasions_id' => array(
+				'occasions_id'               => array(
 					'description' => __( 'The occasions ID of the event.', 'simple-history' ),
 					'type'        => 'string',
 				),
@@ -560,20 +637,24 @@ class WP_REST_Events_Controller extends WP_REST_Controller {
 					'description' => __( 'The subsequent occasions count of the event.', 'simple-history' ),
 					'type'        => 'integer',
 				),
-				'context' => array(
+				'context'                    => array(
 					'description' => __( 'The context of the event.', 'simple-history' ),
 					'type'        => 'object',
 				),
-				'permalink' => array(
+				'permalink'                  => array(
 					'description' => __( 'The permalink of the event.', 'simple-history' ),
 					'type'        => 'string',
 				),
-				'sticky' => array(
+				'sticky'                     => array(
 					'description' => __( 'Whether the event is sticky.', 'simple-history' ),
 					'type'        => 'boolean',
 				),
-				'sticky_appended' => array(
+				'sticky_appended'            => array(
 					'description' => __( 'Whether the event is sticky and appended to the result set.', 'simple-history' ),
+					'type'        => 'boolean',
+				),
+				'backfilled'                 => array(
+					'description' => __( 'Whether the event was backfilled from existing WordPress data.', 'simple-history' ),
 					'type'        => 'boolean',
 				),
 			),
@@ -597,6 +678,16 @@ class WP_REST_Events_Controller extends WP_REST_Controller {
 				'rest_forbidden_context',
 				__( 'Sorry, you are not allowed to view events.', 'simple-history' ),
 				array( 'status' => rest_authorization_required_code() )
+			);
+		}
+
+		// Surrounding events feature requires administrator privileges.
+		// This bypasses normal logger permission checks and could expose sensitive events.
+		if ( isset( $request['surrounding_event_id'] ) && ! current_user_can( 'manage_options' ) ) {
+			return new WP_Error(
+				'rest_forbidden',
+				__( 'You do not have permission to view surrounding events. This feature requires administrator privileges.', 'simple-history' ),
+				array( 'status' => 403 )
 			);
 		}
 
@@ -635,6 +726,7 @@ class WP_REST_Events_Controller extends WP_REST_Controller {
 			'type'                    => 'type',
 			'max_id_first_page'       => 'max_id_first_page',
 			'since_id'                => 'since_id',
+			'since_date'              => 'since_date',
 			'date_from'               => 'date_from',
 			'date_to'                 => 'date_to',
 			'dates'                   => 'dates',
@@ -660,8 +752,12 @@ class WP_REST_Events_Controller extends WP_REST_Controller {
 			}
 		}
 
-		$log_query = new Log_Query();
+		$log_query    = new Log_Query();
 		$query_result = $log_query->query( $args );
+
+		if ( is_wp_error( $query_result ) ) {
+			return $query_result;
+		}
 
 		return rest_ensure_response(
 			[
@@ -683,6 +779,7 @@ class WP_REST_Events_Controller extends WP_REST_Controller {
 
 		$events = [];
 
+		// phpcs:ignore Squiz.PHP.CommentedOutCode.Found
 		// Debug: return error.
 		// phpcs:ignore Squiz.Commenting.InlineComment.InvalidEndChar
 		// return new WP_Error( 'simple_history_error', 'Something went wrong 🤷', array( 'status' => 500 ) );
@@ -710,6 +807,7 @@ class WP_REST_Events_Controller extends WP_REST_Controller {
 			'type'                    => 'type',
 			'max_id_first_page'       => 'max_id_first_page',
 			'since_id'                => 'since_id',
+			'since_date'              => 'since_date',
 			'date_from'               => 'date_from',
 			'date_to'                 => 'date_to',
 			'dates'                   => 'dates',
@@ -725,6 +823,17 @@ class WP_REST_Events_Controller extends WP_REST_Controller {
 			'initiator'               => 'initiator',
 			'context_filters'         => 'context_filters',
 			'ungrouped'               => 'ungrouped',
+			// Surrounding events parameters.
+			'surrounding_event_id'    => 'surrounding_event_id',
+			'surrounding_count'       => 'surrounding_count',
+			// Exclusion filters.
+			'exclude_search'          => 'exclude_search',
+			'exclude_loglevels'       => 'exclude_loglevels',
+			'exclude_loggers'         => 'exclude_loggers',
+			'exclude_messages'        => 'exclude_messages',
+			'exclude_users'           => 'exclude_users',
+			'exclude_user'            => 'exclude_user',
+			'exclude_initiator'       => 'exclude_initiator',
 		);
 
 		/*
@@ -737,8 +846,12 @@ class WP_REST_Events_Controller extends WP_REST_Controller {
 			}
 		}
 
-		$log_query = new Log_Query();
+		$log_query    = new Log_Query();
 		$query_result = $log_query->query( $args );
+
+		if ( is_wp_error( $query_result ) ) {
+			return $query_result;
+		}
 
 		foreach ( $query_result['log_rows'] as $event_row ) {
 			$data     = $this->prepare_item_for_response( $event_row, $request );
@@ -753,14 +866,45 @@ class WP_REST_Events_Controller extends WP_REST_Controller {
 
 		$query_type = $request['type'] ?? 'overview';
 
-		// Add pagination headers to the response for overview and single queries.
-		if ( in_array( $query_type, [ 'overview', 'single' ], true ) ) {
+		// Check if this is a surrounding events query.
+		$is_surrounding_query = isset( $request['surrounding_event_id'] );
+
+		if ( $is_surrounding_query ) {
+			// Add surrounding events specific headers.
+			$response->header( 'X-WP-Total', (int) $query_result['total_row_count'] );
+			$response->header( 'X-WP-TotalPages', 1 );
+			$response->header( 'X-SimpleHistory-CenterEventId', (int) $query_result['center_event_id'] );
+			$response->header( 'X-SimpleHistory-EventsBefore', (int) $query_result['events_before'] );
+			$response->header( 'X-SimpleHistory-EventsAfter', (int) $query_result['events_after'] );
+
+			if ( isset( $query_result['max_id'] ) ) {
+				$response->header( 'X-SimpleHistory-MaxId', (int) $query_result['max_id'] );
+			}
+
+			if ( isset( $query_result['min_id'] ) ) {
+				$response->header( 'X-SimpleHistory-MinId', (int) $query_result['min_id'] );
+			}
+
+			if ( isset( $query_result['max_date'] ) ) {
+				$response->header( 'X-SimpleHistory-MaxDate', $query_result['max_date'] );
+			}
+		} elseif ( in_array( $query_type, [ 'overview', 'single' ], true ) ) {
+			// Add pagination headers to the response for overview and single queries.
 			$page        = (int) $query_result['page_current'];
 			$total_posts = (int) $query_result['total_row_count'];
 			$max_pages   = (int) $query_result['pages_count'];
 
 			$response->header( 'X-WP-Total', (int) $total_posts );
 			$response->header( 'X-WP-TotalPages', (int) $max_pages );
+
+			// Add max_id and max_date for has-updates detection.
+			if ( isset( $query_result['max_id'] ) ) {
+				$response->header( 'X-SimpleHistory-MaxId', (int) $query_result['max_id'] );
+			}
+
+			if ( isset( $query_result['max_date'] ) ) {
+				$response->header( 'X-SimpleHistory-MaxDate', $query_result['max_date'] );
+			}
 
 			if ( $page > 1 ) {
 				$prev_page = $page - 1;
@@ -789,12 +933,12 @@ class WP_REST_Events_Controller extends WP_REST_Controller {
 	 * @return \WP_REST_Response Response object.
 	 */
 	public function prepare_item_for_response( $item, $request ) {
-		$data = [];
-		$context = $item->context;
+		$data    = [];
+		$context = $item->context ?? [];
 
 		$fields = $this->get_fields_for_response( $request );
 
-		if ( Compat::rest_is_field_included( 'id', $fields ) ) {
+		if ( rest_is_field_included( 'id', $fields ) ) {
 			$data['id'] = (int) $item->id;
 		}
 
@@ -802,83 +946,83 @@ class WP_REST_Events_Controller extends WP_REST_Controller {
 		// So on my local computer with timezone stockholm an event was added when my computer
 		// said "21 nov 2024 16:25" and the date in the
 		// database is "2024-11-21 15:24:00".
-		if ( Compat::rest_is_field_included( 'date_local', $fields ) ) {
+		if ( rest_is_field_included( 'date_local', $fields ) ) {
 			// Given a date in UTC or GMT timezone, returns that date in the timezone of the site.
 			$data['date_local'] = get_date_from_gmt( $item->date );
 		}
 
-		if ( Compat::rest_is_field_included( 'date_gmt', $fields ) ) {
+		if ( rest_is_field_included( 'date_gmt', $fields ) ) {
 			$data['date_gmt'] = $item->date;
 		}
 
-		if ( Compat::rest_is_field_included( 'via', $fields ) ) {
-			$row_logger = $this->simple_history->get_instantiated_logger_by_slug( $item->logger );
+		if ( rest_is_field_included( 'via', $fields ) ) {
+			$row_logger  = $this->simple_history->get_instantiated_logger_by_slug( $item->logger );
 			$data['via'] = $row_logger ? $row_logger->get_info_value_by_key( 'name_via' ) : '';
 		}
 
-		if ( Compat::rest_is_field_included( 'message', $fields ) ) {
-			$message = $this->simple_history->get_log_row_plain_text_output( $item );
-			$message = html_entity_decode( $message );
-			$message = wp_strip_all_tags( $message );
+		if ( rest_is_field_included( 'message', $fields ) ) {
+			$message         = $this->simple_history->get_log_row_plain_text_output( $item );
+			$message         = html_entity_decode( $message );
+			$message         = wp_strip_all_tags( $message );
 			$data['message'] = $message;
 		}
 
-		if ( Compat::rest_is_field_included( 'message_html', $fields ) ) {
-			$message = $this->simple_history->get_log_row_plain_text_output( $item );
+		if ( rest_is_field_included( 'message_html', $fields ) ) {
+			$message              = $this->simple_history->get_log_row_plain_text_output( $item );
 			$data['message_html'] = $message;
 		}
 
-		if ( Compat::rest_is_field_included( 'message_uninterpolated', $fields ) ) {
+		if ( rest_is_field_included( 'message_uninterpolated', $fields ) ) {
 			$data['message_uninterpolated'] = $item->message;
 		}
 
-		if ( Compat::rest_is_field_included( 'details_data', $fields ) ) {
+		if ( rest_is_field_included( 'details_data', $fields ) ) {
 			$data['details_data'] = $this->simple_history->get_log_row_details_output( $item )->to_json();
 		}
 
-		if ( Compat::rest_is_field_included( 'details_html', $fields ) ) {
+		if ( rest_is_field_included( 'details_html', $fields ) ) {
 			$data['details_html'] = $this->simple_history->get_log_row_details_output( $item )->to_html();
 		}
 
-		if ( Compat::rest_is_field_included( 'link', $fields ) ) {
+		if ( rest_is_field_included( 'link', $fields ) ) {
 			$data['link'] = Helpers::get_history_admin_url() . "#simple-history/event/{$item->id}";
 		}
 
-		if ( Compat::rest_is_field_included( 'logger', $fields ) ) {
+		if ( rest_is_field_included( 'logger', $fields ) ) {
 			$data['logger'] = $item->logger;
 		}
 
-		if ( Compat::rest_is_field_included( 'message_key', $fields ) ) {
+		if ( rest_is_field_included( 'message_key', $fields ) ) {
 			$data['message_key'] = $item->context_message_key;
 		}
 
-		if ( Compat::rest_is_field_included( 'loglevel', $fields ) ) {
+		if ( rest_is_field_included( 'loglevel', $fields ) ) {
 			$data['loglevel'] = $item->level;
 		}
 
-		if ( Compat::rest_is_field_included( 'initiator', $fields ) ) {
+		if ( rest_is_field_included( 'initiator', $fields ) ) {
 			$data['initiator'] = $item->initiator;
 		}
 
-		if ( Compat::rest_is_field_included( 'initiator_data', $fields ) ) {
+		if ( rest_is_field_included( 'initiator_data', $fields ) ) {
 			$user_avatar_data = get_avatar_data( $context['_user_id'] ?? null, [] );
-			$user_avatar_url = $user_avatar_data['url'] ?? '';
-			$user_object = get_user_by( 'id', $context['_user_id'] ?? null );
+			$user_avatar_url  = $user_avatar_data['url'] ?? '';
+			$user_object      = get_user_by( 'id', $context['_user_id'] ?? null );
 
 			$user_info = [
-				'user_id' => $context['_user_id'] ?? null,
-				'user_login' => $context['_user_login'] ?? null,
-				'user_email' => $context['_user_email'] ?? null,
-				'user_image'  => $this->simple_history->get_log_row_sender_image_output( $item ),
-				'user_avatar_url' => $user_avatar_url,
-				'user_profile_url' => get_edit_user_link( $context['_user_id'] ?? null ),
+				'user_id'           => $context['_user_id'] ?? null,
+				'user_login'        => $context['_user_login'] ?? null,
+				'user_email'        => $context['_user_email'] ?? null,
+				'user_image'        => $this->simple_history->get_log_row_sender_image_output( $item ),
+				'user_avatar_url'   => $user_avatar_url,
+				'user_profile_url'  => get_edit_user_link( $context['_user_id'] ?? null ),
 				'user_display_name' => is_a( $user_object, 'WP_User' ) ? $user_object->display_name : null,
 			];
 
 			$data['initiator_data'] = $user_info;
 		}
 
-		if ( Compat::rest_is_field_included( 'ip_addresses', $fields ) ) {
+		if ( rest_is_field_included( 'ip_addresses', $fields ) ) {
 			// Empty object unless we are ok to include ip addresses.
 			$data['ip_addresses'] = new stdClass();
 
@@ -903,29 +1047,33 @@ class WP_REST_Events_Controller extends WP_REST_Controller {
 			}
 		}
 
-		if ( Compat::rest_is_field_included( 'occasions_id', $fields ) ) {
+		if ( rest_is_field_included( 'occasions_id', $fields ) ) {
 			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
 			$data['occasions_id'] = $item->occasionsID;
 		}
 
-		if ( Compat::rest_is_field_included( 'subsequent_occasions_count', $fields ) ) {
+		if ( rest_is_field_included( 'subsequent_occasions_count', $fields ) ) {
 			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
 			$data['subsequent_occasions_count'] = (int) $item->subsequentOccasions;
 		}
 
-		if ( Compat::rest_is_field_included( 'sticky', $fields ) ) {
+		if ( rest_is_field_included( 'sticky', $fields ) ) {
 			$data['sticky'] = isset( $item->context['_sticky'] ) ? true : false;
 		}
 
-		if ( Compat::rest_is_field_included( 'sticky_appended', $fields ) ) {
+		if ( rest_is_field_included( 'sticky_appended', $fields ) ) {
 			$data['sticky_appended'] = isset( $item->sticky_appended ) ? true : false;
 		}
 
-		if ( Compat::rest_is_field_included( 'context', $fields ) ) {
+		if ( rest_is_field_included( 'backfilled', $fields ) ) {
+			$data['backfilled'] = isset( $item->context[ Existing_Data_Importer::BACKFILLED_CONTEXT_KEY ] );
+		}
+
+		if ( rest_is_field_included( 'context', $fields ) ) {
 			$data['context'] = $item->context;
 		}
 
-		if ( Compat::rest_is_field_included( 'permalink', $fields ) ) {
+		if ( rest_is_field_included( 'permalink', $fields ) ) {
 			$data['permalink'] = sprintf(
 				'%s#simple-history/event/%d',
 				Helpers::get_history_admin_url(),
@@ -957,8 +1105,9 @@ class WP_REST_Events_Controller extends WP_REST_Controller {
 	 */
 	public function create_item( $request ) {
 		$message = $request->get_param( 'message' );
-		$note = $request->get_param( 'note' );
-		$level = $request->get_param( 'level' ) ?? 'info';
+		$note    = $request->get_param( 'note' );
+		$level   = $request->get_param( 'level' ) ?? 'info';
+		$date    = $request->get_param( 'date' );
 
 		if ( ! Log_Levels::is_valid_level( $level ) ) {
 			return new WP_Error(
@@ -966,6 +1115,19 @@ class WP_REST_Events_Controller extends WP_REST_Controller {
 				__( 'Invalid log level specified.', 'simple-history' ),
 				array( 'status' => 400 )
 			);
+		}
+
+		// Validate date format if provided.
+		if ( ! empty( $date ) ) {
+			// Check if date is in valid MySQL datetime format (Y-m-d H:i:s).
+			$parsed_date = \DateTime::createFromFormat( 'Y-m-d H:i:s', $date );
+			if ( ! $parsed_date || $parsed_date->format( 'Y-m-d H:i:s' ) !== $date ) {
+				return new WP_Error(
+					'rest_invalid_date',
+					__( 'Invalid date format. Please use Y-m-d H:i:s format (e.g., 2024-01-15 14:30:00).', 'simple-history' ),
+					array( 'status' => 400 )
+				);
+			}
 		}
 
 		$logger = $this->simple_history->get_instantiated_logger_by_slug( 'CustomEntryLogger' );
@@ -985,13 +1147,20 @@ class WP_REST_Events_Controller extends WP_REST_Controller {
 			$context['note'] = $note;
 		}
 
+		// Add custom date if provided.
+		// The _date context parameter is handled by the logger
+		// and will override the default current timestamp.
+		if ( ! empty( $date ) ) {
+			$context['_date'] = $date;
+		}
+
 		$method = $level . '_message';
 		$logger->$method( 'custom_entry_added', $context );
 
 		return new \WP_REST_Response(
 			array(
 				'message' => 'Event logged successfully',
-				'data' => array(
+				'data'    => array(
 					'status' => 201,
 				),
 			),
