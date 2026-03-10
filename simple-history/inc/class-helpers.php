@@ -467,7 +467,8 @@ class Helpers {
 			$wpdb->prepare(
 				'
 					SELECT table_name AS "table_name",
-					round(((data_length + index_length) / 1024 / 1024), 2) "size_in_mb"
+					round(((data_length + index_length) / 1024 / 1024), 2) "size_in_mb",
+					data_length AS "data_length"
 					FROM information_schema.TABLES
 					WHERE table_schema = %s
 					AND table_name IN (%s, %s);
@@ -637,6 +638,24 @@ class Helpers {
 	public static function get_valid_ip_address_from_anonymized( $ip_address ) {
 		$ip_address = preg_replace( '/\.x$/', '.0', $ip_address );
 		return $ip_address;
+	}
+
+	/**
+	 * Validate an IP address string for use in event queries.
+	 *
+	 * Accepts IPv4 addresses (with optional ".x" anonymized octets)
+	 * and IPv6 addresses.
+	 *
+	 * @param string $value IP address to validate.
+	 * @return bool True if the value is a valid IP address format.
+	 */
+	public static function is_valid_ip_address_filter( $value ) {
+		// IPv4: 1-3 digits per octet, last two octets may be "x" for anonymized IPs.
+		$ipv4_pattern = '/^\d{1,3}\.\d{1,3}\.[\dx]{1,3}\.[\dx]{1,3}$/';
+		// IPv6: standard hex:colon notation.
+		$ipv6_pattern = '/^[0-9a-fA-F:]+$/';
+
+		return (bool) preg_match( $ipv4_pattern, $value ) || (bool) preg_match( $ipv6_pattern, $value );
 	}
 
 	/**
@@ -1372,6 +1391,53 @@ class Helpers {
 	}
 
 	/**
+	 * Render a stored JSON diff (from jfcherng/php-diff JsonHtml renderer) to side-by-side HTML.
+	 *
+	 * @param string $json_diff_string JSON-encoded diff array.
+	 * @return string HTML output, or empty string on failure.
+	 */
+	public static function render_json_diff_to_html( $json_diff_string ) {
+		$renderer_class = 'Simple_History\Vendor\Jfcherng\Diff\Renderer\Html\SideBySide';
+
+		if ( ! class_exists( $renderer_class ) ) {
+			return '';
+		}
+
+		try {
+			$diff_array = json_decode( $json_diff_string, true );
+
+			if ( ! is_array( $diff_array ) || empty( $diff_array ) ) {
+				return '';
+			}
+
+			$renderer = new $renderer_class(
+				[
+					'showHeader'    => false,
+					'lineNumbers'   => false,
+					'separateBlock' => true,
+				]
+			);
+
+			$html = $renderer->renderArray( $diff_array );
+
+			if ( empty( $html ) ) {
+				return '';
+			}
+
+			// Sanitize renderer output as defense-in-depth against tampered stored data.
+			$html = wp_kses_post( $html );
+
+			return '<div class="SimpleHistory__diff__contents" tabindex="0">'
+				. '<div class="SimpleHistory__diff__contentsInner">'
+				. $html
+				. '</div>'
+				. '</div>';
+		} catch ( \Exception $e ) {
+			return '';
+		}
+	}
+
+	/**
 	 * Get number of events the last n days.
 	 *
 	 * Respects user permissions - only counts events from loggers the current user can view.
@@ -1381,6 +1447,14 @@ class Helpers {
 	 * @return int Number of events user can view.
 	 */
 	public static function get_num_events_last_n_days( $period_days = Date_Helper::DAYS_PER_MONTH ) {
+		$cache_key   = 'num_events_last_n_days_' . $period_days . '_user_' . get_current_user_id();
+		$cache_group = self::get_cache_group();
+		$cached      = wp_cache_get( $cache_key, $cache_group );
+
+		if ( $cached !== false ) {
+			return (int) $cached;
+		}
+
 		global $wpdb;
 		$simple_history              = Simple_History::get_instance();
 		$sqlStringLoggersUserCanRead = $simple_history->get_loggers_that_user_can_read( null, 'sql' );
@@ -1398,40 +1472,24 @@ class Helpers {
 		);
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$count = $wpdb->get_var( $sql );
+		$count = (int) $wpdb->get_var( $sql );
 
-		return (int) $count;
+		wp_cache_set( $cache_key, $count, $cache_group );
+
+		return $count;
 	}
 
 	/**
 	 * Get number of events today (WordPress timezone-aware).
 	 *
+	 * Convenience wrapper for get_num_events_last_n_days(1).
 	 * Counts individual events from midnight today (00:00:00) in WordPress timezone.
 	 * Respects user permissions - only counts events from loggers the current user can view.
 	 *
 	 * @return int Number of events today that user can view.
 	 */
 	public static function get_num_events_today() {
-		global $wpdb;
-		$simple_history              = Simple_History::get_instance();
-		$sqlStringLoggersUserCanRead = $simple_history->get_loggers_that_user_can_read( null, 'sql' );
-
-		$sql = sprintf(
-			'
-                SELECT count(*)
-                FROM %1$s
-                WHERE date >= FROM_UNIXTIME(%2$d)
-                AND logger IN %3$s
-            ',
-			$simple_history->get_events_table_name(),
-			Date_Helper::get_today_start_timestamp(),
-			$sqlStringLoggersUserCanRead
-		);
-
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$count = $wpdb->get_var( $sql );
-
-		return (int) $count;
+		return self::get_num_events_last_n_days( 1 );
 	}
 
 	/**
@@ -1443,6 +1501,14 @@ class Helpers {
 	 * @return int Number of events currently in database that user can view.
 	 */
 	public static function get_current_database_events_count() {
+		$cache_key   = 'db_events_count_user_' . get_current_user_id();
+		$cache_group = self::get_cache_group();
+		$cached      = wp_cache_get( $cache_key, $cache_group );
+
+		if ( $cached !== false ) {
+			return (int) $cached;
+		}
+
 		global $wpdb;
 		$simple_history              = Simple_History::get_instance();
 		$sqlStringLoggersUserCanRead = $simple_history->get_loggers_that_user_can_read( null, 'sql' );
@@ -1458,9 +1524,11 @@ class Helpers {
 		);
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$count = $wpdb->get_var( $sql );
+		$count = (int) $wpdb->get_var( $sql );
 
-		return (int) $count;
+		wp_cache_set( $cache_key, $count, $cache_group );
+
+		return $count;
 	}
 
 	/**
@@ -1473,6 +1541,14 @@ class Helpers {
 	 * @return array Array with date as key and number of events user can view as value.
 	 */
 	public static function get_num_events_per_day_last_n_days( $period_days = Date_Helper::DAYS_PER_MONTH ) {
+		$cache_key   = 'events_per_day_last_n_days_' . $period_days . '_user_' . get_current_user_id();
+		$cache_group = self::get_cache_group();
+		$cached      = wp_cache_get( $cache_key, $cache_group );
+
+		if ( $cached !== false ) {
+			return $cached;
+		}
+
 		/** @var \wpdb $wpdb */
 		global $wpdb;
 
@@ -1532,7 +1608,14 @@ class Helpers {
 		}
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		return $wpdb->get_results( $sql );
+		$results = $wpdb->get_results( $sql );
+
+		// Don't cache failed queries (null result on DB error).
+		if ( $results !== null ) {
+			wp_cache_set( $cache_key, $results, $cache_group );
+		}
+
+		return $results;
 	}
 
 	/**

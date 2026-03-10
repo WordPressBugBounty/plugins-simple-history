@@ -32,8 +32,8 @@ class History_Insights_Sidebar_Service extends Service {
 	 * Called when service is loaded.
 	 */
 	public function loaded() {
-		// Priority 5 to show after sale promo (priority 4) but before other boxes.
-		add_action( 'simple_history/dropin/sidebar/sidebar_html', [ $this, 'output_sidebar_widget' ], 5 );
+		// Priority 30 to show after sale/email promos but before tip and other boxes.
+		add_action( 'simple_history/dropin/sidebar/sidebar_html', [ $this, 'output_sidebar_widget' ], 30 );
 		add_action( 'simple_history/enqueue_admin_scripts', [ $this, 'enqueue_scripts_and_styles' ] );
 	}
 
@@ -461,7 +461,9 @@ class History_Insights_Sidebar_Service extends Service {
 			: __( 'forever', 'simple-history' );
 
 		// Make retention period a link to settings with anchor to retention section.
-		$settings_url          = Helpers::get_settings_page_url() . '#simple_history_clear_log_info';
+		// When premium is active, link to premium settings where the retention setting lives.
+		$retention_anchor      = Helpers::is_premium_add_on_active() ? '#simple-history-premium-settings' : '#simple_history_clear_log_info';
+		$settings_url          = Helpers::get_settings_page_url() . $retention_anchor;
 		$retention_text_linked = sprintf(
 			'<a href="%s" class="sh-whitespace-nowrap"><b>%s</b></a>',
 			esc_url( $settings_url ),
