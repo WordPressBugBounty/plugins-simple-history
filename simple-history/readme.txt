@@ -4,7 +4,7 @@ Contributors: eskapism, wpsimplehistory
 Donate link: https://simple-history.com/sponsor/?utm_source=wordpress_org&utm_medium=plugin_directory&utm_campaign=sponsorship&utm_content=readme_donate_link
 Tags: history, audit log, event log, user tracking, activity
 Tested up to: 6.9
-Stable tag: 5.24.0
+Stable tag: 5.24.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -95,7 +95,6 @@ Simple History starts tracking instantly after activation — no setup needed. I
 
 -   **Dashboard widget** – Activity stats summary and recent events
 -   **Admin bar quick view** – Dropdown with latest events on any admin page
--   **"This page" frontend filter** – See only events related to the page you're viewing
 -   **Command palette** – Type "Simple History" to jump to the log for the current post
 -   **Dedicated admin page** – Full log with search, filters, and insights sidebar
 -   **Email reports** – Weekly summary delivered to your inbox
@@ -151,9 +150,9 @@ Yes! Simple History has been free for over 10 years and will remain free. To sup
 You can access the log in multiple ways:
 
 -   The **dashboard** widget with activity stats summary
--   The **admin bar** quick view dropdown – on the frontend, use the "This page" toggle to see events for the current page
--   The **WordPress command palette** – type "Simple History" to jump to the log for the current post
 -   A **dedicated log page** in the WordPress admin area
+-   The **admin bar** quick view dropdown on
+-   The **WordPress command palette** – type "Simple History" to jump to the log for the current post
 
 ### Can I change where the History menu appears in WordPress admin?
 
@@ -250,6 +249,24 @@ For more information, see our support page [GDPR and Privacy: How Your Data is S
 -   [Add a 5-star review so other users know it's good.](https://wordpress.org/support/plugin/simple-history/reviews/?filter=5)
 -   [Get the premium add-on for more features.](https://simple-history.com/add-ons/premium?utm_source=wordpress_org&utm_medium=plugin_directory&utm_campaign=documentation&utm_content=readme_doc_premium)
 
+### 5.24.1 (March 2026)
+
+**Security**
+
+-   RSS feed error response no longer exposes the feed secret token in the self-referencing link.
+
+**Changed**
+
+-   Capabilities added to roles are now logged at "notice" level instead of "warning" to reduce unnecessary alarm during routine plugin activations.
+
+**Fixed**
+
+-   Role Capability Logger no longer spams the log when plugins (e.g. Astra/Spectra) toggle capabilities on every page load. Changes are now batched per request and only net differences are logged.
+
+**Added**
+
+-   User ID displayed as an inline suffix on the name in the user card popover, making it easier to identify users when debugging.
+
 ### 5.24.0 (March 2026)
 
 A redesigned dashboard widget that takes up less space, user details card on click, and much better logging of menus, categories, and image edits.
@@ -273,6 +290,7 @@ A redesigned dashboard widget that takes up less space, user details card on cli
 -   Multisite uninstall support, removing tables, options, and cron events across all subsites in the network.
 -   Compact storage for post content changes (used for creating a diff between the old and new content), reducing database size for large posts (experimental).
 -   Failed login throttling to protect the database from brute-force attacks — logs the first 100 failed attempts, then automatically skips the rest. Includes an informational notice on both the main event log and the dashboard widget (experimental).
+-   Role & Capability Logger that tracks when roles are created, deleted, or have their capabilities modified, including which plugin triggered the change (experimental).
 
 **Changed**
 
