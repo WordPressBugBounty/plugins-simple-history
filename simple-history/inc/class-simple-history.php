@@ -178,6 +178,7 @@ class Simple_History {
 			Services\Sidebar_Tips_Service::class,
 			Services\Simple_History_Updates::class,
 			Services\Stats_Service::class,
+			Services\Status_Box_Service::class,
 			Services\Stealth_Mode::class,
 			Services\Welcome_Message_Service::class,
 			Services\WP_CLI_Commands::class,
@@ -878,7 +879,7 @@ class Simple_History {
 	 * @return string
 	 */
 	public function get_log_row_sender_image_output( $row ) {
-		/** @var Loggers\Logger $row_logger */
+		/** @var string $row_logger */
 		$row_logger   = $row->logger;
 		$row->context = isset( $row->context ) && is_array( $row->context ) ? $row->context : array();
 

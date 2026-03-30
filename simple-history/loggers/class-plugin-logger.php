@@ -684,14 +684,15 @@ class Plugin_Logger extends Logger {
 	 */
 	public function ajax_GetGitHubPluginInfo() {
 
+		check_admin_referer( 'simple-history-github-plugin-info' );
+
 		if ( ! current_user_can( 'install_plugins' ) ) {
 			wp_die( esc_html__( "You don't have access to this page.", 'simple-history' ) );
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$repo = isset( $_GET['repo'] ) ? (string) sanitize_text_field( wp_unslash( $_GET['repo'] ) ) : '';
 
-		if ( $repo !== '' ) {
+		if ( $repo === '' ) {
 			wp_die( esc_html__( 'Could not find GitHub repository.', 'simple-history' ) );
 		}
 
@@ -1163,7 +1164,7 @@ class Plugin_Logger extends Logger {
 				$context['plugin_author']      = $plugin_data['AuthorName'] ?? '';
 
 				if ( ! empty( $plugin_data['GitHub Plugin URI'] ) ) {
-					$context['plugin_github_url'] = $plugin_data['GitHub Plugin URI'];
+					$context['plugin_github_url'] = $plugin_data['GitHub Plugin URI']; // @phpstan-ignore-line offsetAccess.notFound
 				}
 			}
 
@@ -1263,7 +1264,7 @@ class Plugin_Logger extends Logger {
 		);
 
 		if ( ! empty( $plugin_data['GitHub Plugin URI'] ) ) {
-			$context['plugin_github_url'] = $plugin_data['GitHub Plugin URI'];
+			$context['plugin_github_url'] = $plugin_data['GitHub Plugin URI']; // @phpstan-ignore-line offsetAccess.notFound
 		}
 
 		$this->info_message( 'plugin_activated', $context );
@@ -1291,7 +1292,7 @@ class Plugin_Logger extends Logger {
 		);
 
 		if ( ! empty( $plugin_data['GitHub Plugin URI'] ) ) {
-			$context['plugin_github_url'] = $plugin_data['GitHub Plugin URI'];
+			$context['plugin_github_url'] = $plugin_data['GitHub Plugin URI']; // @phpstan-ignore-line offsetAccess.notFound
 		}
 
 		$this->info_message( 'plugin_deactivated', $context );
@@ -1469,7 +1470,7 @@ class Plugin_Logger extends Logger {
 					<td><a title="%2$s" class="thickbox" href="%1$s">%2$s</a></td>
 				</tr>
 				',
-				admin_url( sprintf( 'admin-ajax.php?action=SimplePluginLogger_GetGitHubPluginInfo&getrepo&amp;repo=%1$s&amp;TB_iframe=true&amp;width=640&amp;height=550', esc_url_raw( $context['plugin_github_url'] ) ) ),
+				wp_nonce_url( admin_url( sprintf( 'admin-ajax.php?action=SimplePluginLogger_GetGitHubPluginInfo&getrepo&amp;repo=%1$s&amp;TB_iframe=true&amp;width=640&amp;height=550', esc_url_raw( $context['plugin_github_url'] ) ) ), 'simple-history-github-plugin-info' ),
 				esc_html_x( 'View plugin info', 'plugin logger: plugin info thickbox title view all info', 'simple-history' )
 			);
 		}
@@ -1584,7 +1585,7 @@ class Plugin_Logger extends Logger {
 					<td><a title="%2$s" class="thickbox" href="%1$s">%2$s</a></td>
 				</tr>
 				',
-				admin_url( sprintf( 'admin-ajax.php?action=SimplePluginLogger_GetGitHubPluginInfo&getrepo&amp;repo=%1$s&amp;TB_iframe=true&amp;width=640&amp;height=550', esc_url_raw( $context['plugin_github_url'] ) ) ),
+				wp_nonce_url( admin_url( sprintf( 'admin-ajax.php?action=SimplePluginLogger_GetGitHubPluginInfo&getrepo&amp;repo=%1$s&amp;TB_iframe=true&amp;width=640&amp;height=550', esc_url_raw( $context['plugin_github_url'] ) ) ), 'simple-history-github-plugin-info' ),
 				esc_html_x( 'View plugin info', 'plugin logger: plugin info thickbox title view all info', 'simple-history' )
 			);
 		}

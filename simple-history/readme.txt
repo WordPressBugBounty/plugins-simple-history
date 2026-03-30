@@ -4,7 +4,7 @@ Contributors: eskapism, wpsimplehistory
 Donate link: https://simple-history.com/sponsor/?utm_source=wordpress_org&utm_medium=plugin_directory&utm_campaign=sponsorship&utm_content=readme_donate_link
 Tags: history, audit log, event log, user tracking, activity
 Tested up to: 6.9
-Stable tag: 5.24.1
+Stable tag: 5.25.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -248,6 +248,45 @@ For more information, see our support page [GDPR and Privacy: How Your Data is S
 -   [Sponsor the plugin to keep it free.](https://simple-history.com/sponsor/?utm_source=wordpress_org&utm_medium=plugin_directory&utm_campaign=sponsorship&utm_content=readme_sponsor_footer)
 -   [Add a 5-star review so other users know it's good.](https://wordpress.org/support/plugin/simple-history/reviews/?filter=5)
 -   [Get the premium add-on for more features.](https://simple-history.com/add-ons/premium?utm_source=wordpress_org&utm_medium=plugin_directory&utm_campaign=documentation&utm_content=readme_doc_premium)
+
+### 5.25.0 (March 2026)
+
+This release focuses on keeping your database lean. Three features that reduce log storage size are now active for all users: smarter default retention for new installs, failed login rate limiting, and compact diff storage for post content changes.
+[Read more about it in the release post](https://simple-history.com/2026/simple-history-5-25-0-released/)
+
+**Added**
+
+-   Failed login rate limiting is now active for all users, capping logging at 100 consecutive failed attempts to prevent database bloat from brute force attacks.
+-   Compact diff storage for post content changes is now active for all users, storing only a compact diff instead of full old+new content (up to 99% smaller for typical edits) with automatic fallback when the diff would be larger.
+-   Search is now faster and more accurate for all users: queries skip occasion grouping for speed and only search relevant context keys from registered loggers instead of scanning all metadata. Previously this was an experimental opt-in feature. Use the "Event metadata" search field in the advanced filters to search all metadata (similar to the old behavior).
+-   Hover-reveal quick action button on event rows for faster access to event details.
+-   List of current experimental features shown near the enable toggle in settings.
+-   "/" keyboard shortcut to focus the search input, with a visual hint badge. Pressing Escape returns focus to the previously focused element.
+-   Settings and Premium/Get Premium buttons in the top-right header, replacing the Add-ons link.
+-   Email Reports settings moved to their own sub-tab under Settings for better discoverability.
+-   Feature discovery bar in the page header showing active features and settings status with dot indicators. Each item links directly to its settings section for quick access. (experimental)
+-   New installs default to 30-day retention (existing installs keep 60 days), keeping your database lean from day one.
+
+**Changed**
+
+-   Search and filters redesigned into a single compact row with search input, date selector, and action buttons — replacing the previous multi-line layout.
+-   Expanded filters panel now stacks labels above inputs on smaller screens for better usability.
+-   History Insights sidebar: today's data point is now highlighted with a visible dot and the end date shows "(today)" for clarity.
+-   History Insights sidebar: reduced y-axis clutter on the activity chart for a cleaner look.
+-   History Insights sidebar: database stats section is now visually separated as footer content with cache freshness info moved into the tooltip.
+
+**Fixed**
+
+-   Dashboard widget corners not matching the new rounded style in WordPress 7.0.
+-   PHP notice on the widget editor screen (widgets.php) caused by the command palette script loading `wp-editor` on non-post-editor screens.
+-   Occasion counts in the RSS feed were always zero and never rendered.
+-   Inverted condition in the GitHub plugin info handler that caused it to always fail.
+-   "No matching events" empty state text and icon too light to meet WCAG AA contrast requirements.
+-   Deprecation notice when using Yoast Duplicate Post 4.6, which replaced the `dp_duplicate_post` and `dp_duplicate_page` hooks with `duplicate_post_after_duplicated`.
+
+**Security**
+
+-   Nonce verification added to the GitHub plugin info AJAX handler to prevent CSRF.
 
 ### 5.24.1 (March 2026)
 

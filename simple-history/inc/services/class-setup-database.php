@@ -14,6 +14,9 @@ use Simple_History\Services\Auto_Backfill_Service;
  * Setup database and upgrade it if needed.
  */
 class Setup_Database extends Service {
+	/** @var bool Whether this is a fresh install (set in step 1, read in later steps). */
+	private $is_fresh_install = false;
+
 	/**
 	 * @inheritdoc
 	 */
@@ -37,6 +40,7 @@ class Setup_Database extends Service {
 		$this->setup_version_5_to_version_6();
 		$this->setup_version_6_to_version_7();
 		$this->setup_version_7_to_version_8();
+		$this->setup_version_8_to_version_9();
 	}
 
 	/**
@@ -160,6 +164,9 @@ class Setup_Database extends Service {
 		// This populates the history with existing WordPress data (posts, pages, users)
 		// so users don't start with an empty log.
 		Auto_Backfill_Service::set_backfill_pending();
+
+		// Flag this as a fresh install so later migration steps can detect it.
+		$this->is_fresh_install = true;
 
 		// Show a welcome admin notice on the next admin page load.
 		// Only set pending if the option doesn't exist yet (true first install, not table recovery).
@@ -415,6 +422,24 @@ class Setup_Database extends Service {
 	}
 
 	/**
+	 * Update from db version 8 to version 9.
+	 *
+	 * Stores retention days in the database so it autoloads
+	 * and avoids an extra DB query on every page load.
+	 * Fresh installs: 30 days. Existing installs: 60 days.
+	 */
+	private function setup_version_8_to_version_9() {
+		if ( $this->get_db_version() !== 8 ) {
+			return;
+		}
+
+		$retention_days = $this->is_fresh_install ? 30 : 60;
+		update_option( 'simple_history_retention_days', $retention_days, true );
+
+		$this->update_db_to_version( 9 );
+	}
+
+	/**
 	 * Add welcome messages to the log.
 	 *
 	 * Fired from action simple_history/loggers_loaded.
@@ -457,7 +482,7 @@ class Setup_Database extends Service {
 		);
 
 		$welcome_message_1 = __(
-			'Simple History is live. Here\'s what to expect.',
+			'Simple History is now active and logging events on your site.',
 			'simple-history'
 		);
 
@@ -475,7 +500,7 @@ class Setup_Database extends Service {
 	 *
 	 * @param string $html The HTML output.
 	 * @param object $row The row object.
-	 * @return string New HTML output.
+	 * @return string|\Simple_History\Event_Details\Event_Details_Group HTML output or Event_Details_Group with welcome message.
 	 */
 	public function add_row_details_output( $html, $row ) {
 		$is_welcome_message = $row->context['is_welcome_message'] ?? false;

@@ -37,6 +37,9 @@ function simple_history_cleanup_site() {
 		'simple_history_email_report_enabled',
 		'simple_history_email_report_recipients',
 		'simple_history_channel_file',
+		'simple_history_retention_days',
+		'sh_core_failed_login_count',
+		'sh_core_failed_login_total_suppressed',
 	);
 
 	foreach ( $arr_options as $one_option ) {
@@ -45,10 +48,12 @@ function simple_history_cleanup_site() {
 
 	// Remove database tables.
 	$table_name = $wpdb->prefix . 'simple_history';
-	$wpdb->query( "DROP TABLE IF EXISTS $table_name" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+	$wpdb->query( "DROP TABLE IF EXISTS $table_name" );
 
 	$table_name = $wpdb->prefix . 'simple_history_contexts';
-	$wpdb->query( "DROP TABLE IF EXISTS $table_name" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+	$wpdb->query( "DROP TABLE IF EXISTS $table_name" );
 
 	// Remove all scheduled cron events.
 	$cron_hooks = array(
@@ -72,7 +77,7 @@ if ( is_multisite() ) {
 	);
 
 	foreach ( $site_ids as $site_id ) {
-		switch_to_blog( $site_id );
+		switch_to_blog( $site_id ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.switch_to_blog_switch_to_blog
 		simple_history_cleanup_site();
 		restore_current_blog();
 	}

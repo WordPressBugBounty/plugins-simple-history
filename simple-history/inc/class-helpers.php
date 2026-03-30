@@ -359,7 +359,7 @@ class Helpers {
 	/**
 	 * Get number of rows and the size of each Simple History table in the database.
 	 *
-	 * @return array<string, object{table_name: string, size_in_mb: float, num_rows: int}>
+	 * @return array<string, array{table_name: string, size_in_mb: float|string, num_rows: int}>
 	 */
 	public static function get_db_table_stats() {
 		switch ( Log_Query::get_db_engine() ) {
@@ -455,7 +455,7 @@ class Helpers {
 	/**
 	 * Get number of rows and the size of each Simple History table in the database.
 	 *
-	 * @return array<string, object{table_name: string, size_in_mb: float, num_rows: int}>
+	 * @return array<string, array{table_name: string, size_in_mb: float|string, num_rows: int}>
 	 */
 	public static function get_db_table_stats_mysql() {
 		global $wpdb;
@@ -958,6 +958,39 @@ class Helpers {
 	}
 
 	/**
+	 * Output the top-right header area with Premium status or CTA.
+	 *
+	 * @return string HTML for the premium/settings header link.
+	 */
+	public static function get_header_premium_link() {
+		$settings_url = Menu_Manager::get_admin_url_by_slug( Simple_History::SETTINGS_MENU_PAGE_SLUG );
+
+		ob_start();
+
+		?>
+		<div class="sh-PageHeader-rightLink">
+			<a href="<?php echo esc_url( $settings_url ); ?>" class="sh-PageHeader-settingsIcon" aria-label="<?php esc_attr_e( 'Settings', 'simple-history' ); ?>" title="<?php esc_attr_e( 'Settings', 'simple-history' ); ?>">
+				<span class="dashicons dashicons-admin-generic"></span>
+			</a>
+
+			<?php if ( self::is_premium_add_on_active() ) { ?>
+				<span class="sh-PageHeader-headerBtn sh-PageHeader-headerBtn--premiumActive">
+					<span class="dashicons dashicons-star-filled"></span>
+					<?php esc_html_e( 'Premium active', 'simple-history' ); ?>
+				</span>
+			<?php } else { ?>
+				<a href="<?php echo esc_url( self::get_tracking_url( 'https://simple-history.com/premium/', 'premium_header_cta' ) ); ?>" class="sh-PageHeader-headerBtn sh-PageHeader-headerBtn--getPremium" target="_blank">
+					<span class="dashicons dashicons-star-filled"></span>
+					<?php esc_html_e( 'Get Premium', 'simple-history' ); ?>
+				</a>
+			<?php } ?>
+		</div>
+		<?php
+
+		return ob_get_clean();
+	}
+
+	/**
 	 * Gets the pager size,
 	 * i.e. the number of items to show on each page in the history
 	 *
@@ -1088,7 +1121,9 @@ class Helpers {
 	 * @return int Number of days.
 	 */
 	public static function get_clear_history_interval() {
-		$days = 60;
+		// Default: 30 days for fresh installs, 60 days for existing installs.
+		$stored_days = get_option( 'simple_history_retention_days' );
+		$days        = $stored_days !== false ? (int) $stored_days : 60;
 
 		/**
 		 * Deprecated filter name, use `simple_history/db_purge_days_interval` instead.
@@ -1098,7 +1133,7 @@ class Helpers {
 
 		/**
 		 * Filter to modify number of days of history to keep.
-		 * Default is 60 days.
+		 * Default is 30 days for new installs, 60 days for existing installs.
 		 *
 		 * @example Keep only the most recent 7 days in the log.
 		 *
@@ -2455,5 +2490,14 @@ class Helpers {
 
 		$primary_role = array_shift( $valid_roles );
 		return $primary_role !== null ? (string) $primary_role : '';
+	}
+
+	/**
+	 * Check if the current server is running Windows.
+	 *
+	 * @return bool True if running on Windows.
+	 */
+	public static function is_windows() {
+		return strtoupper( substr( PHP_OS, 0, 3 ) ) === 'WIN';
 	}
 }
