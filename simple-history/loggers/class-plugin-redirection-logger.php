@@ -373,13 +373,40 @@ class Plugin_Redirection_Logger extends Logger {
 
 		if ( $redirection_item !== false ) {
 			$context['prev_source_url'] = $redirection_item->get_url();
-			$context['prev_target']     = maybe_unserialize( $redirection_item->get_action_data() );
+			$context['prev_target']     = $this->unserialize_action_data( $redirection_item->get_action_data() );
 		}
 
 		$this->info_message(
 			'redirection_redirection_edited',
 			$context
 		);
+	}
+
+	/**
+	 * Unserialize action data from the Redirection plugin, without allowing objects.
+	 *
+	 * The value comes from Redirection's own database table and is only ever
+	 * expected to hold scalars and arrays. Allowing objects would turn this into
+	 * a PHP object injection sink if any active plugin or theme ships a usable
+	 * gadget chain.
+	 *
+	 * Mirrors maybe_unserialize(), including the trim() and the suppressed
+	 * warning: is_serialized() trims before deciding, so whitespace padded data
+	 * passes the check but fails a raw unserialize(), and corrupt data can slip
+	 * past the check entirely. This runs inside Redirection's own REST request,
+	 * where an unsuppressed notice would corrupt the JSON response.
+	 *
+	 * @param mixed $action_data Raw action data from Redirection.
+	 * @return mixed Unserialized data, the value as-is if it is not serialized,
+	 *               or false if it looked serialized but could not be decoded.
+	 */
+	private function unserialize_action_data( $action_data ) {
+		if ( ! is_string( $action_data ) || ! is_serialized( $action_data ) ) {
+			return $action_data;
+		}
+
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize, WordPress.PHP.NoSilencedErrors.Discouraged -- Objects are explicitly disallowed; matches maybe_unserialize() behaviour.
+		return @unserialize( trim( $action_data ), [ 'allowed_classes' => false ] );
 	}
 
 	/**
